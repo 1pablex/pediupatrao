@@ -1,0 +1,13 @@
+/target/
+
+# Credenciais locais
+.env
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+nbproject/
+
+# Enunciado da atividade
+*.docx

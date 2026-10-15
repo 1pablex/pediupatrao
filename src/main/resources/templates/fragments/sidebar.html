@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <body>
+        <!-- Os itens do menu acompanham o perfil, mas a proteção real está no backend (SecurityConfig e serviços). -->
+        <div th:fragment="sidebar">
+            <div id="sidebar" class="d-flex flex-column">
+                <h4 class="text-center py-3 mb-0">Pediu Patrão</h4>
+
+                <div class="text-center small pb-3 border-bottom border-secondary" sec:authorize="isAuthenticated()">
+                    <i class="bi bi-person-circle"></i>
+                    <span sec:authentication="name"></span>
+                    <span class="badge bg-light text-dark ms-1" sec:authorize="hasRole('ADMIN')">ADMIN</span>
+                    <span class="badge bg-warning text-dark ms-1" sec:authorize="hasRole('GERENTE')">GERENTE</span>
+                    <span class="badge bg-info text-dark ms-1" sec:authorize="hasRole('ATENDENTE')">ATENDENTE</span>
+                </div>
+
+                <ul class="nav flex-column mt-2">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/}">
+                            <i class="bi bi-house"></i>&nbsp;Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/pedidos}">
+                            <i class="bi bi-bag"></i>&nbsp;Pedidos
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('GERENTE','ATENDENTE')">
+                        <a class="nav-link" th:href="@{/clientes}">
+                            <i class="bi bi-person-raised-hand"></i>&nbsp;Clientes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/produtos}">
+                            <i class="bi bi-boxes"></i>&nbsp;Produtos
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','GERENTE')">
+                        <a class="nav-link" th:href="@{/auditoria}">
+                            <i class="bi bi-shield-check"></i>&nbsp;Auditoria
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/usuarios}">
+                            <i class="bi bi-people-fill"></i>&nbsp;Usuários
+                        </a>
+                    </li>
+                </ul>
+
+                <form th:action="@{/logout}" method="post" class="mt-auto p-3">
+                    <button type="submit" class="btn btn-outline-light btn-sm w-100">
+                        <i class="bi bi-box-arrow-right me-1"></i>Sair
+                    </button>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>
