@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AppConfig {
 
-    /** Relógio injetável: permite testar regras que dependem de data/hora. */
+    /** Relógio injetável: permite regras que dependem de data/hora. */
     @Bean
     public Clock clock() {
         return Clock.systemDefaultZone();

@@ -26,7 +26,7 @@
     </properties>
 
     <dependencies>
-        <!-- ✅ Versões gerenciadas pelo parent — sem necessidade de declarar -->
+        <!-- ✅ Versões gerenciadas pelo parent - sem necessidade de declarar -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

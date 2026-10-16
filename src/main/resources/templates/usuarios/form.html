@@ -46,7 +46,7 @@
                     <label for="password" class="form-label fw-medium">
                         <i class="bi bi-lock me-1"></i>Senha
                         <small class="text-muted fw-normal" th:if="${usuario.id != null}">
-                            — deixe em branco para manter a atual
+                            - deixe em branco para manter a atual
                         </small>
                     </label>
                     <div class="input-group">
@@ -73,7 +73,7 @@
                     </label>
                     <select id="perfil" class="form-select" th:field="*{perfil}" th:errorclass="is-invalid" required>
                         <option value="">Selecione um perfil</option>
-                        <option th:each="p : ${perfis}" th:value="${p}" th:text="|${p} — ${p.descricao}|"></option>
+                        <option th:each="p : ${perfis}" th:value="${p}" th:text="|${p} - ${p.descricao}|"></option>
                     </select>
                     <div class="invalid-feedback" th:errors="*{perfil}"></div>
                     <div class="form-text" th:if="${usuario.username == #authentication.name}">

@@ -8681,8 +8681,8 @@ var Dropzone = /*#__PURE__*/function (_Emitter) {
         // It's actual different than the size to be transmitted.
         total: file.size,
         bytesSent: 0,
-        filename: this._renameFile(file) // Not setting chunking information here, because the acutal data — and
-        // thus the chunks — might change if `options.transformFile` is set
+        filename: this._renameFile(file) // Not setting chunking information here, because the acutal data - and
+        // thus the chunks - might change if `options.transformFile` is set
         // and does something to the data.
 
       };

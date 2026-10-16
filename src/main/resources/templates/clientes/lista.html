@@ -35,11 +35,11 @@
                     </tr>
                     <tr th:each="cliente : ${clientes}">
                         <td class="ps-4 fw-medium" th:text="${cliente.nome}"></td>
-                        <td th:text="${cliente.telefone} ?: '—'"></td>
+                        <td th:text="${cliente.telefone} ?: '-'"></td>
                         <td>
                             <span th:if="${cliente.logradouro != null}"
-                                  th:text="|${cliente.logradouro}, ${cliente.numero ?: 's/n'}${cliente.complemento != null ? ' - ' + cliente.complemento : ''} — ${cliente.bairro ?: ''} ${cliente.cidade != null ? '- ' + cliente.cidade : ''}${cliente.estado != null ? '/' + cliente.estado : ''}|"></span>
-                            <span th:if="${cliente.logradouro == null}" th:text="${cliente.endereco} ?: '—'"></span>
+                                  th:text="|${cliente.logradouro}, ${cliente.numero ?: 's/n'}${cliente.complemento != null ? ' - ' + cliente.complemento : ''} - ${cliente.bairro ?: ''} ${cliente.cidade != null ? '- ' + cliente.cidade : ''}${cliente.estado != null ? '/' + cliente.estado : ''}|"></span>
+                            <span th:if="${cliente.logradouro == null}" th:text="${cliente.endereco} ?: '-'"></span>
                         </td>
                         <td class="text-end pe-4" sec:authorize="hasRole('ATENDENTE')">
                             <a th:href="@{/clientes/editar/{id}(id=${cliente.id})}" class="btn btn-sm btn-outline-primary me-1">

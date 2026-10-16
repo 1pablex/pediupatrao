@@ -87,12 +87,12 @@
             <td class="small">
                 <div th:each="a : ${r.alteracoes}">
                     <strong th:text="${a.campo}"></strong>:
-                    <span class="text-danger" th:text="${a.valorAnterior} ?: '—'"></span>
+                    <span class="text-danger" th:text="${a.valorAnterior} ?: '-'"></span>
                     →
-                    <span class="text-success" th:text="${a.valorNovo} ?: '—'"></span>
+                    <span class="text-success" th:text="${a.valorNovo} ?: '-'"></span>
                 </div>
             </td>
-            <td class="small" th:text="${r.justificativa} ?: '—'"></td>
+            <td class="small" th:text="${r.justificativa} ?: '-'"></td>
         </tr>
     </tbody>
 </table>

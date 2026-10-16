@@ -56,7 +56,7 @@
                                 <div th:text="${#temporals.format(pedido.dataHoraSaida, 'dd/MM/yyyy HH:mm')}"></div>
                                 <small class="text-muted" th:text="${pedido.responsavelSaida}"></small>
                             </th:block>
-                            <span class="text-muted" th:if="${pedido.dataHoraSaida == null}">—</span>
+                            <span class="text-muted" th:if="${pedido.dataHoraSaida == null}">-</span>
                         </td>
                         <td class="text-end pe-4">
                             <a th:href="@{/pedidos/{id}(id=${pedido.id})}" class="btn btn-sm btn-outline-primary">

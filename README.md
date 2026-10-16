@@ -1,4 +1,4 @@
-# Pediu Patrão — Controle de acesso, gestão de pedidos e auditoria
+# Pediu Patrão - Controle de acesso, gestão de pedidos e auditoria
 
 Sistema de pedidos de pizzaria desenvolvido em **Java 21, Spring Boot 3.4, Spring Security, MongoDB e Thymeleaf**.
 Esta versão evolui o projeto base com perfis de acesso, fluxo controlado de pedidos, descontos e cancelamentos
@@ -61,7 +61,7 @@ Os testes não precisam do MongoDB (repositórios são simulados com Mockito).
 
 ## Requisitos implementados
 
-### RF01 — Controle de usuários e permissões
+### RF01 - Controle de usuários e permissões
 
 | Perfil    | Pode                                                                                          |
 |-----------|-----------------------------------------------------------------------------------------------|
@@ -79,7 +79,7 @@ Os testes não precisam do MongoDB (repositórios são simulados com Mockito).
 - Tentativas de acesso negado e falhas de login são registradas em log (sem senhas). Após **5 falhas de login** o usuário fica bloqueado por 5 minutos.
 - A lista de clientes passou a ser renderizada no servidor (antes era montada com `innerHTML`, permitindo XSS).
 
-### RF02 — Evolução do cadastro de pedidos
+### RF02 - Evolução do cadastro de pedidos
 
 O `Pedido` agora tem: itens (`ItemPedido` com produto, nome, preço unitário, quantidade e subtotal), subtotal,
 percentual e valor de desconto, **valor total**, tipo (entrega/retirada), responsável e data/hora de entrada,
@@ -92,7 +92,7 @@ dados de saída, finalização, desconto, cancelamento e histórico de status.
 - O preço é copiado para o item: alterar o cardápio depois não muda pedidos já registrados.
 - Valores monetários usam `BigDecimal`. `@Version` evita que duas alterações simultâneas se sobrescrevam.
 
-### RF03 — Entrada, saída e transições
+### RF03 - Entrada, saída e transições
 
 ```
 RECEBIDO → EM PREPARAÇÃO → PRONTO → SAIU PARA ENTREGA (entrega) → FINALIZADO
@@ -104,13 +104,13 @@ CANCELADO: somente GERENTE, apenas antes da saída
 - RECEBIDO registra data/hora e responsável pela entrada; SAIU PARA ENTREGA / RETIRADO registra **obrigatoriamente** data/hora e responsável pela saída; FINALIZADO registra a finalização.
 - Pedido cancelado não aceita nenhuma alteração. CANCELADO não pode ser alcançado pela troca de status, só pela operação de cancelamento.
 
-### RF04 — Cancelamentos e descontos (exclusivos do GERENTE)
+### RF04 - Cancelamentos e descontos (exclusivos do GERENTE)
 
 - **Cancelamento:** exige justificativa (10 a 500 caracteres), só antes da saída, preserva itens e valores e impede alterações posteriores.
 - **Desconto:** percentual de 0% a **20%** sobre o subtotal, no máximo 2 casas decimais, somente antes da saída. Um novo desconto substitui o anterior (não acumula).
 - Ambos são auditados com usuário, data/hora e valores anteriores e novos.
 
-### RF05 — Auditoria
+### RF05 - Auditoria
 
 - Coleção `auditoria` no MongoDB (`RegistroAuditoria`), com: usuário autenticado e perfil, data/hora, operação, entidade e id, **campos alterados com valor anterior e novo** e justificativa.
 - Auditados: inclusão de pedido, mudanças de status (incluindo saída), desconto, cancelamento, inclusão/alteração/exclusão de clientes (com destaque para endereço e telefone). Também são auditadas as alterações de produtos e de usuários.

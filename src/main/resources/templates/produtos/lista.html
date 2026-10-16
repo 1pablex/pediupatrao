@@ -38,7 +38,7 @@
                         <td class="ps-4 fw-medium" th:text="${produto.nome}"></td>
                         <td th:text="${produto.tipo}"></td>
                         <td class="text-end"
-                            th:text="${produto.preco != null} ? |R$ ${#numbers.formatDecimal(produto.preco, 1, 'POINT', 2, 'COMMA')}| : '—'"></td>
+                            th:text="${produto.preco != null} ? |R$ ${#numbers.formatDecimal(produto.preco, 1, 'POINT', 2, 'COMMA')}| : '-'"></td>
                         <td class="text-center">
                             <span class="badge" th:classappend="${produto.disponivel} ? 'bg-success' : 'bg-secondary'"
                                   th:text="${produto.disponivel} ? 'Sim' : 'Não'"></span>

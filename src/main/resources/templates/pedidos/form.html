@@ -31,7 +31,7 @@
                         <select id="clienteId" class="form-select" th:field="*{clienteId}" th:errorclass="is-invalid" required>
                             <option value="">Selecione o cliente</option>
                             <option th:each="c : ${clientes}" th:value="${c.id}"
-                                    th:text="|${c.nome} — ${c.telefone}|"></option>
+                                    th:text="|${c.nome} - ${c.telefone}|"></option>
                         </select>
                     </div>
                     <div class="col-md-5">
@@ -61,14 +61,14 @@
                                     <option th:each="p : ${produtos}" th:value="${p.id}"
                                             th:attr="data-preco=${p.preco}"
                                             th:selected="${p.id == item.produtoId}"
-                                            th:text="|${p.nome} (${p.tipo}) — R$ ${#numbers.formatDecimal(p.preco, 1, 'POINT', 2, 'COMMA')}|"></option>
+                                            th:text="|${p.nome} (${p.tipo}) - R$ ${#numbers.formatDecimal(p.preco, 1, 'POINT', 2, 'COMMA')}|"></option>
                                 </select>
                             </td>
                             <td>
                                 <input type="number" class="form-control campo-quantidade" min="1" max="50" required
                                        th:name="|itens[${stat.index}].quantidade|" th:value="${item.quantidade}">
                             </td>
-                            <td class="text-end subtotal-item">—</td>
+                            <td class="text-end subtotal-item">-</td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-danger btn-remover" title="Remover item">
                                     <i class="bi bi-x-lg"></i>
@@ -123,7 +123,7 @@
                     const preco = opcao && opcao.dataset.preco ? parseFloat(opcao.dataset.preco) : 0;
                     const qtd = parseInt(linha.querySelector('.campo-quantidade').value, 10) || 0;
                     const subtotal = preco * qtd;
-                    linha.querySelector('.subtotal-item').textContent = subtotal > 0 ? moeda(subtotal) : '—';
+                    linha.querySelector('.subtotal-item').textContent = subtotal > 0 ? moeda(subtotal) : '-';
                     total += subtotal;
                 });
                 document.getElementById('totalEstimado').textContent = moeda(total);
