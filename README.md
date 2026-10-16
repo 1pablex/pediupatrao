@@ -161,45 +161,8 @@ Autenticação **HTTP Basic** (`-u usuario:senha`). Erros no formato ProblemDeta
 | * | `/api/usuarios...` | ADMIN |
 | GET | `/api/auditoria?entidade=PEDIDO&entidadeId=...&pagina=0&tamanho=20` | ADMIN, GERENTE |
 
-### Demonstrando os bloqueios no backend
 
-```bash
-# Atendente tentando cancelar -> 403
-curl -i -u atendente01:SENHA -H "Content-Type: application/json" \
-  -X POST http://localhost:8080/api/pedidos/ID/cancelamento -d '{"justificativa":"tentativa indevida"}'
 
-# Admin tentando aplicar desconto -> 403
-curl -i -u admin:SENHA -H "Content-Type: application/json" \
-  -X POST http://localhost:8080/api/pedidos/ID/desconto -d '{"percentual":10}'
-
-# Gerente com desconto acima de 20% -> 400
-curl -i -u gerente01:SENHA -H "Content-Type: application/json" \
-  -X POST http://localhost:8080/api/pedidos/ID/desconto -d '{"percentual":25}'
-
-# Transição inválida -> 422
-curl -i -u atendente01:SENHA -H "Content-Type: application/json" \
-  -X PUT http://localhost:8080/api/pedidos/ID/status -d '{"status":"FINALIZADO"}'
-
-# Cadastro de usuário sem autenticação -> 401 / atendente consultando auditoria -> 403
-curl -i -H "Content-Type: application/json" -X POST http://localhost:8080/api/usuarios \
-  -d '{"username":"hacker","password":"12345678","perfil":"ADMIN"}'
-curl -i -u atendente01:SENHA http://localhost:8080/api/auditoria
-```
-
----
-
-## Roteiro sugerido para o vídeo
-
-1. **Login com os três perfis** e o menu de cada um (ADMIN: Usuários/Auditoria; GERENTE: Clientes/Auditoria; ATENDENTE: Clientes).
-2. **ATENDENTE**: cadastra um cliente e registra um pedido (mostrar total calculado, entrada e responsável).
-3. **Fluxo do pedido**: avança para Em preparação → Pronto → Saiu para entrega (mostrar data/hora e responsável pela saída) → Finalizado.
-4. **Bloqueios**: atendente acessando `/auditoria` ou `/usuarios` (403); comandos `curl` acima (403/422/401).
-5. **GERENTE**: aplica desconto de 10% (e tenta 25%), cancela outro pedido com justificativa e mostra que ele não aceita mais alterações; tenta cancelar um pedido que já saiu (bloqueado).
-6. **ATENDENTE** altera endereço e telefone do cliente.
-7. **Auditoria** (GERENTE ou ADMIN): mostrar os registros gerados nos passos anteriores, com valores anteriores/novos, justificativa e telefone mascarado.
-8. **ADMIN** tentando alterar o próprio perfil (bloqueado).
-
----
 
 ## Estrutura
 
