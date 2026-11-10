@@ -1,0 +1,84 @@
+/* Dashboard administrativo: cores definidas por papel, usadas pelo CSS e lidas pelo dashboard.js */
+.dash {
+    --dash-serie: #2a78d6;          /* série única / destaque */
+    --dash-serie-suave: #86b6ef;    /* barras sem destaque */
+    --dash-grade: #e8e8e6;          /* linhas de grade e eixos */
+    --dash-texto: #212529;
+    --dash-texto-2: #52514e;
+    --dash-bom: #0a7d0a;
+    --dash-ruim: #c0392b;
+}
+
+.dash .tile-label {
+    font-size: .8rem;
+    color: var(--dash-texto-2);
+}
+
+.dash .tile-hero-value {
+    font-size: 3rem;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--dash-texto);
+}
+
+.dash .tile-value {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--dash-texto);
+}
+
+.dash .tile-sub,
+.dash .tile-delta {
+    font-size: .8rem;
+    color: var(--dash-texto-2);
+}
+
+.dash .tile-delta .bom { color: var(--dash-bom); }
+.dash .tile-delta .ruim { color: var(--dash-ruim); }
+
+.dash .mini-tile {
+    border: 1px solid var(--dash-grade);
+    border-radius: .5rem;
+    padding: .5rem .25rem;
+}
+
+.dash .mini-valor {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* Altura do container inclui o eixo x: o gráfico nunca ganha rolagem interna */
+.dash .grafico { position: relative; width: 100%; }
+.dash .grafico-alto { height: 300px; }
+.dash .grafico-medio { height: 240px; }
+.dash .grafico-baixo { height: 220px; }
+
+/* Ao atualizar, mantém o conteúdo anterior esmaecido (sem piscar nem pular o layout) */
+.dash [data-painel].atualizando { opacity: .55; transition: opacity .2s; }
+
+.dash .painel-vazio {
+    color: var(--dash-texto-2);
+    text-align: center;
+    padding: 2rem 0;
+    font-size: .9rem;
+}
+
+.dash .tabela-num td,
+.dash .tabela-num th { font-variant-numeric: tabular-nums; }
+
+.dash .barra-participacao {
+    height: 8px;
+    border-radius: 4px;
+    background: #cde2fb;
+    overflow: hidden;
+}
+
+.dash .barra-participacao > span {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background: var(--dash-serie);
+}
+
+.dash details summary { cursor: pointer; color: var(--dash-texto-2); }
+.dash .tabela-dados { max-height: 260px; overflow-y: auto; }
