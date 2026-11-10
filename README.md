@@ -5,7 +5,7 @@ Sistema de pedidos de pizzaria desenvolvido em **Java 21, Spring Boot 3.4, Sprin
 | Etapa | Entrega |
 |-------|---------|
 | 1 | Perfis de acesso, fluxo controlado de pedidos, descontos e cancelamentos exclusivos do gerente e auditoria persistente |
-| 2 | **Dashboard administrativo** com API própria de indicadores, gráficos, ranking e filtros ([detalhes](#etapa-2---dashboard-administrativo)), versão `v2.0.0` |
+| 2 | **Dashboard administrativo** com API própria de indicadores, gráficos, ranking e filtros ([detalhes](#etapa-2---dashboard-administrativo)), versão `v2.1.0` |
 
 ---
 
@@ -120,8 +120,9 @@ curl -i -u gerente01:SENHA "http://localhost:8080/api/v1/dashboard/resumo?dataIn
 | `feature/dashboard-api` | Endpoints da API, agregações no MongoDB, validação dos filtros, segurança, dados de demonstração e testes |
 | `feature/dashboard-ui` | Tela do dashboard que consome a API |
 | `feature/documentacao` | Requisitos, documentação dos endpoints, OpenAPI, evidências e este README |
+| `feature/dashboard-visual` | Nova identidade visual, gráficos interativos, mapa de calor e filtros cruzados |
 | `develop` | Integração das features (merges `--no-ff`) |
-| `release/2.0.0` | Fechamento da versão, integrada em `main` com a tag `v2.0.0` e devolvida para `develop` |
+| `release/2.0.0`, `release/2.1.0` | Fechamento de cada versão, integrada em `main` com as tags `v2.0.0` e `v2.1.0` e devolvida para `develop` |
 
 ---
 

@@ -227,7 +227,7 @@ que já gravava nome e preço, para que mudanças no cadastro não alterem o his
 | **Filtros cruzados**: indicador troca a métrica, categoria filtra o ranking, status filtra a lista de pedidos, sempre com etiqueta removível e guardados na URL. | Deixa explorar os dados sem sair do painel, e fica claro o que está filtrado. |
 | **Comparação com o período anterior dentro do gráfico** e **mapa de calor dia x hora**. | Mostram tendência e sazonalidade (fins de semana, jantar) melhor que um número isolado ou barras por hora. |
 | **Gerador de dados de demonstração opcional**, só com banco vazio. | Permite demonstrar tendências (90 dias, fins de semana mais fortes, pico no jantar) sem nunca misturar dados fictícios com reais. |
-| **Gitflow**: `feature/dashboard-api`, `feature/dashboard-ui` e `feature/documentacao` integradas em `develop`, `release/2.0.0` publicada em `main` com tag `v2.0.0`. | Histórico separado por responsabilidade e entrega rastreável. |
+| **Gitflow**: `feature/dashboard-api`, `feature/dashboard-ui`, `feature/documentacao` e `feature/dashboard-visual` integradas em `develop`; `release/2.0.0` e `release/2.1.0` publicadas em `main` com as tags `v2.0.0` e `v2.1.0`. | Histórico separado por responsabilidade e entrega rastreável. |
 
 ## 8. Limitações e evoluções possíveis
 
