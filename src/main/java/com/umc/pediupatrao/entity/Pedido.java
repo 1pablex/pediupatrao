@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "pedidos")
@@ -32,7 +33,8 @@ public class Pedido {
 
     private StatusPedido status;
 
-    // Entrada
+    // Entrada (indexada: todas as consultas do dashboard filtram por período de entrada)
+    @Indexed
     private LocalDateTime dataHoraEntrada;
     private String responsavelEntrada;
 
