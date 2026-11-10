@@ -5,7 +5,7 @@ Sistema de pedidos de pizzaria desenvolvido em **Java 21, Spring Boot 3.4, Sprin
 | Etapa | Entrega |
 |-------|---------|
 | 1 | Perfis de acesso, fluxo controlado de pedidos, descontos e cancelamentos exclusivos do gerente e auditoria persistente |
-| 2 | **Dashboard administrativo** com API própria de indicadores, gráficos, ranking e filtros ([detalhes](#etapa-2---dashboard-administrativo)), versão `v2.1.0` |
+| 2 | **Dashboard administrativo** com API própria de indicadores, gráficos, ranking e filtros ([detalhes](#etapa-2---dashboard-administrativo)), versão `v2.1.0` · [vídeo](https://www.youtube.com/watch?v=8cLmkFMEn3M) |
 
 ---
 
@@ -74,6 +74,10 @@ Painel em **`/dashboard`** (perfis ADMIN e GERENTE) que consome uma API REST pr�
 com os dados agregados direto no MongoDB.
 
 ![Dashboard](docs/evidencias/01-dashboard-indicadores-e-graficos.jpg)
+
+### Vídeo de apresentação
+
+Demonstração do funcionamento e das principais decisões de análise e projeto (até 3 minutos): **[assistir no YouTube](https://www.youtube.com/watch?v=8cLmkFMEn3M)**
 
 ### Documentação
 
