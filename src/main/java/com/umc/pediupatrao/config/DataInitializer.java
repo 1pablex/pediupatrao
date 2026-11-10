@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
@@ -24,6 +25,7 @@ public class DataInitializer {
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
     @Bean
+    @Order(1)
     CommandLineRunner initDatabase(UsuarioRepository usuarioRepository, ProdutoRepository produtoRepository,
             PasswordEncoder passwordEncoder,
             @Value("${app.seed.senha-admin:}") String senhaAdmin,
