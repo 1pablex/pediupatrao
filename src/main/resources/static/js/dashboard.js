@@ -7,7 +7,7 @@
     'use strict';
 
     const API = '/api/v1/dashboard';
-    const INTERVALO_ATUALIZACAO_MS = 60000;
+    const INTERVALO_ATUALIZACAO_MS = 5 * 60 * 1000; // 5 minutos
     const TAMANHO_PAGINA = 10;
 
     const raiz = document.getElementById('dashboard');

@@ -125,7 +125,7 @@ Implementação: `static/js/dashboard.js` (chamadas `fetch`) e `DashboardApiCont
 
 Atualização:
 
-- Atualização automática a cada 60 segundos (pode ser desligada) e botão "Atualizar".
+- Atualização automática a cada 5 minutos (pode ser desligada) e botão "Atualizar".
 - A atualização automática é pausada com a aba em segundo plano.
 - Cada resposta informa `geradoEm` (momento do cálculo), exibido como "Atualizado às ...".
 

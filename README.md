@@ -94,7 +94,7 @@ com os dados agregados direto no MongoDB.
 | RF04 Produtos mais vendidos | Ranking por quantidade ou faturamento, com participação | `GET /produtos/ranking` |
 | RF05 Filtros | Período, status, tipo e categoria em uma linha, guardados na URL | Parâmetros comuns e `GET /filtros` |
 | RF06 Integração com a API | Todo dado da tela vem da API via `fetch` | Sessão das telas ou HTTP Basic |
-| RF07 Atualização e tratamento | Atualização a cada 60 s, estados de carregando, vazio e erro, aviso de sessão expirada | `geradoEm` em cada resposta, validação com 400 e conversão segura dos dados |
+| RF07 Atualização e tratamento | Atualização a cada 5 min, estados de carregando, vazio e erro, aviso de sessão expirada | `geradoEm` em cada resposta, validação com 400 e conversão segura dos dados |
 
 ### Demonstração rápida
 
