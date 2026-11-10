@@ -276,11 +276,13 @@ public class PedidoService {
         if (produto.getPreco() == null || produto.getPreco().signum() <= 0) {
             throw new RegraNegocioException("O produto '" + produto.getNome() + "' está sem preço válido.");
         }
-        return new ItemPedido(produto.getId(), produto.getNome(), produto.getPreco(), quantidade);
+        ItemPedido item = new ItemPedido(produto.getId(), produto.getNome(), produto.getPreco(), quantidade);
+        item.setCategoria(produto.getTipo());
+        return item;
     }
 
     /** subtotal = soma dos itens; desconto = subtotal x percentual; total = subtotal - desconto. */
-    static void recalcularValores(Pedido pedido) {
+    public static void recalcularValores(Pedido pedido) {
         BigDecimal subtotal = pedido.getItens().stream()
                 .map(item -> item.getPrecoUnitario().multiply(BigDecimal.valueOf(item.getQuantidade())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add)

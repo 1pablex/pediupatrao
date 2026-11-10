@@ -3,13 +3,14 @@ package com.umc.pediupatrao.entity;
 import java.math.BigDecimal;
 
 /**
- * Item embutido no pedido. Nome e preço são copiados do produto no momento do registro,
+ * Item embutido no pedido. Nome, categoria e preço são copiados do produto no momento do registro,
  * para que alterações futuras no cardápio não mudem pedidos já feitos.
  */
 public class ItemPedido {
 
     private String produtoId;
     private String nomeProduto;
+    private String categoria; // tipo do produto no momento do pedido (Pizza, Bebida...)
     private BigDecimal precoUnitario;
     private int quantidade;
     private BigDecimal subtotal;
@@ -39,6 +40,14 @@ public class ItemPedido {
 
     public void setNomeProduto(String nomeProduto) {
         this.nomeProduto = nomeProduto;
+    }
+
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(String categoria) {
+        this.categoria = categoria;
     }
 
     public BigDecimal getPrecoUnitario() {
