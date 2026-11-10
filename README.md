@@ -1,8 +1,11 @@
-# Pediu Patrão - Controle de acesso, gestão de pedidos e auditoria
+# Pediu Patrão - Sistema de pedidos com controle de acesso, auditoria e dashboard
 
 Sistema de pedidos de pizzaria desenvolvido em **Java 21, Spring Boot 3.4, Spring Security, MongoDB e Thymeleaf**.
-Esta versão evolui o projeto base com perfis de acesso, fluxo controlado de pedidos, descontos e cancelamentos
-exclusivos do gerente e auditoria persistente das alterações de pedidos e clientes.
+
+| Etapa | Entrega |
+|-------|---------|
+| 1 | Perfis de acesso, fluxo controlado de pedidos, descontos e cancelamentos exclusivos do gerente e auditoria persistente |
+| 2 | **Dashboard administrativo** com API própria de indicadores, gráficos, ranking e filtros ([detalhes](#etapa-2---dashboard-administrativo)), versão `v2.0.0` |
 
 ---
 
@@ -28,9 +31,13 @@ MONGODB_DATABASE=pediupatrao
 SEED_SENHA_ADMIN=<senha do admin>
 SEED_SENHA_GERENTE=<senha do gerente01>
 SEED_SENHA_ATENDENTE=<senha do atendente01>
+DEMO_GERAR_DADOS=false
 ```
 
 O arquivo `.env` está no `.gitignore`. As variáveis também podem ser definidas diretamente no ambiente.
+
+`DEMO_GERAR_DADOS=true` gera 90 dias de pedidos fictícios para demonstrar o dashboard. Só executa com o banco
+ainda sem pedidos; para não misturar com dados reais, use um banco próprio (ex.: `MONGODB_DATABASE=pediupatrao_demo`).
 
 ### Rodando
 
@@ -55,11 +62,78 @@ Também é criado um cardápio inicial (pizzas, lanche, porção, bebida e adici
 ./mvnw test
 ```
 
-Os testes não precisam do MongoDB (repositórios são simulados com Mockito).
+A maior parte dos testes simula os repositórios com Mockito. O teste de integração do dashboard
+(`DashboardRepositoryMongoTest`) usa o MongoDB local, em um banco exclusivo de teste, e é ignorado sem falhar
+quando não há MongoDB disponível. Evidências em [docs/evidencias-testes.md](docs/evidencias-testes.md).
 
 ---
 
-## Requisitos implementados
+## Etapa 2 - Dashboard administrativo
+
+Painel em **`/dashboard`** (perfis ADMIN e GERENTE) que consome uma API REST própria, **`/api/v1/dashboard`**,
+com os dados agregados direto no MongoDB.
+
+![Dashboard](docs/evidencias/01-dashboard-indicadores-e-graficos.jpg)
+
+### Documentação
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [docs/requisitos.md](docs/requisitos.md) | Requisitos funcionais e não funcionais, regras das métricas, modelo de dados e decisões de projeto |
+| [docs/api-dashboard.md](docs/api-dashboard.md) | Endpoints, parâmetros, exemplos de requisição e resposta e erros possíveis |
+| [docs/openapi.yaml](docs/openapi.yaml) | Especificação OpenAPI 3.1 |
+| [docs/evidencias-testes.md](docs/evidencias-testes.md) | Testes automatizados, chamadas reais à API e capturas de tela |
+
+### Requisitos atendidos
+
+| Requisito | Na tela | Na API |
+|-----------|---------|--------|
+| RF01 Indicadores gerais | Faturamento, pedidos, ticket médio, cancelamentos e descontos, com variação sobre o período anterior | `GET /resumo` |
+| RF02 Análise de vendas | Evolução por dia, semana ou mês, faturamento por categoria e pedidos por horário | `GET /vendas/serie`, `/vendas/por-categoria`, `/vendas/por-hora` |
+| RF03 Situação dos pedidos | Pedidos por status, em andamento, tempo médio até a saída e lista paginada | `GET /pedidos/situacao`, `/pedidos` |
+| RF04 Produtos mais vendidos | Ranking por quantidade ou faturamento, com participação | `GET /produtos/ranking` |
+| RF05 Filtros | Período, status, tipo e categoria em uma linha, guardados na URL | Parâmetros comuns e `GET /filtros` |
+| RF06 Integração com a API | Todo dado da tela vem da API via `fetch` | Sessão das telas ou HTTP Basic |
+| RF07 Atualização e tratamento | Atualização a cada 60 s, estados de carregando, vazio e erro, aviso de sessão expirada | `geradoEm` em cada resposta, validação com 400 e conversão segura dos dados |
+
+### Demonstração rápida
+
+```bash
+# banco próprio para a demonstração, com 90 dias de pedidos fictícios
+MONGODB_DATABASE=pediupatrao_demo DEMO_GERAR_DADOS=true ./mvnw spring-boot:run
+```
+
+No Windows (PowerShell): `$env:MONGODB_DATABASE="pediupatrao_demo"; $env:DEMO_GERAR_DADOS="true"; .\mvnw.cmd spring-boot:run`
+
+Entre como `gerente01` e abra **http://localhost:8080/dashboard**. Para testar a API direto:
+
+```bash
+curl -u gerente01:SENHA "http://localhost:8080/api/v1/dashboard/resumo?dataInicio=2026-10-01&dataFim=2026-10-31"
+curl -i -u atendente01:SENHA "http://localhost:8080/api/v1/dashboard/resumo"            # 403
+curl -i -u gerente01:SENHA "http://localhost:8080/api/v1/dashboard/resumo?dataInicio=2026-11-10&dataFim=2026-11-01"   # 400
+```
+
+### Fluxo de branches (gitflow)
+
+| Branch | Conteúdo |
+|--------|----------|
+| `feature/dashboard-api` | Endpoints da API, agregações no MongoDB, validação dos filtros, segurança, dados de demonstração e testes |
+| `feature/dashboard-ui` | Tela do dashboard que consome a API |
+| `feature/documentacao` | Requisitos, documentação dos endpoints, OpenAPI, evidências e este README |
+| `develop` | Integração das features (merges `--no-ff`) |
+| `release/2.0.0` | Fechamento da versão, integrada em `main` com a tag `v2.0.0` e devolvida para `develop` |
+
+### Roteiro do vídeo (até 3 minutos)
+
+1. **0:00 a 0:20** Problema: o gerente precisa acompanhar vendas e pedidos. Login como `gerente01` e abrir o Dashboard.
+2. **0:20 a 1:10** Tela: indicadores com comparativo, troca entre faturamento, pedidos e ticket médio, agrupamento por semana, horário de pico, situação dos pedidos e ranking por quantidade e por faturamento.
+3. **1:10 a 1:40** Filtros: 90 dias, só retirada, recarregar a página mostrando que a URL mantém a visão; período invertido barrado.
+4. **1:40 a 2:20** API: os `curl` acima (200, 403 para o atendente, 400 com mensagem) e a documentação em `docs/api-dashboard.md`.
+5. **2:20 a 3:00** Decisões de projeto (`docs/requisitos.md`, seção 7): agregação no banco, um endpoint por pergunta de negócio, versionamento `/api/v1`, envelope com `geradoEm`, rateio do desconto e gitflow.
+
+---
+
+## Requisitos implementados (etapa 1)
 
 ### RF01 - Controle de usuários e permissões
 
@@ -143,7 +217,7 @@ Exemplo de registro (como aparece na tela):
 
 ---
 
-## API REST
+## API REST (etapa 1)
 
 Autenticação **HTTP Basic** (`-u usuario:senha`). Erros no formato ProblemDetail (JSON).
 
@@ -188,7 +262,7 @@ curl -i -u atendente01:SENHA http://localhost:8080/api/auditoria
 
 ---
 
-## Roteiro sugerido para o vídeo
+## Roteiro sugerido para o vídeo (etapa 1)
 
 1. **Login com os três perfis** e o menu de cada um (ADMIN: Usuários/Auditoria; GERENTE: Clientes/Auditoria; ATENDENTE: Clientes).
 2. **ATENDENTE**: cadastra um cliente e registra um pedido (mostrar total calculado, entrada e responsável).
@@ -205,14 +279,22 @@ curl -i -u atendente01:SENHA http://localhost:8080/api/auditoria
 
 ```
 src/main/java/com/umc/pediupatrao
-├── config/        SecurityConfig, DataInitializer, MongoInitConfig, AppConfig
+├── config/        SecurityConfig, DataInitializer, DemoDataInitializer, MongoInitConfig, AppConfig
 ├── controller/
 │   ├── api/       Controladores REST + ApiExceptionHandler
 │   └── web/       Controladores das telas Thymeleaf + WebExceptionHandler
 ├── dto/           Dados de entrada/saída (formulários, requests, respostas)
+│   └── dashboard/ Filtros e respostas da API do dashboard
 ├── entity/        Documentos MongoDB e enums (Perfil, StatusPedido, TipoOperacao...)
 ├── exception/     Exceções de negócio
 ├── repository/    Repositórios Spring Data (AuditoriaRepository somente-inserção)
+│                  e DashboardRepository (pipelines de agregação)
 ├── security/      Usuário logado, bloqueio de login, respostas 401/403
-└── service/       Regras de negócio + autorização (@PreAuthorize) + auditoria
+└── service/       Regras de negócio + autorização (@PreAuthorize) + auditoria + DashboardService
+
+src/main/resources
+├── templates/dashboard.html     Página do dashboard
+└── static/js/dashboard.js       Consumo da API e gráficos (Chart.js)
+
+docs/                            Requisitos, API, OpenAPI e evidências de testes
 ```

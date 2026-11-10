@@ -1,0 +1,498 @@
+openapi: 3.1.0
+info:
+  title: Pediu Patrão - API do Dashboard Administrativo
+  version: 1.0.0
+  description: |
+    Endpoints somente leitura que alimentam o dashboard administrativo do Pediu Patrão:
+    indicadores de vendas, séries temporais, situação dos pedidos, ranking de produtos e filtros.
+
+    - Acesso exclusivo dos perfis ADMIN e GERENTE.
+    - Período considerado pela data de entrada do pedido; venda = pedido não cancelado.
+    - Valores em reais com 2 casas decimais; percentuais de 0 a 100.
+servers:
+  - url: http://localhost:8080/api/v1/dashboard
+    description: Ambiente local
+security:
+  - basicAuth: []
+  - sessao: []
+tags:
+  - name: Vendas
+  - name: Pedidos
+  - name: Produtos
+  - name: Filtros
+
+paths:
+  /resumo:
+    get:
+      tags: [Vendas]
+      summary: Indicadores gerais de vendas (RF01)
+      operationId: obterResumo
+      parameters:
+        - $ref: '#/components/parameters/dataInicio'
+        - $ref: '#/components/parameters/dataFim'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/tipoEntrega'
+      responses:
+        '200':
+          description: Indicadores do período e comparativo com o período anterior
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      dados: { $ref: '#/components/schemas/ResumoVendas' }
+        '400': { $ref: '#/components/responses/ParametroInvalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/AcessoNegado' }
+
+  /vendas/serie:
+    get:
+      tags: [Vendas]
+      summary: Evolução das vendas por dia, semana ou mês (RF02)
+      operationId: obterSerieVendas
+      parameters:
+        - $ref: '#/components/parameters/dataInicio'
+        - $ref: '#/components/parameters/dataFim'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/tipoEntrega'
+        - name: agrupamento
+          in: query
+          schema: { type: string, enum: [DIA, SEMANA, MES], default: DIA }
+          description: Granularidade. A semana começa na segunda-feira.
+      responses:
+        '200':
+          description: Um ponto para cada intervalo do período, inclusive sem vendas
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      dados: { $ref: '#/components/schemas/SerieVendas' }
+        '400': { $ref: '#/components/responses/ParametroInvalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/AcessoNegado' }
+
+  /vendas/por-categoria:
+    get:
+      tags: [Vendas]
+      summary: Faturamento por categoria de produto (RF02)
+      operationId: obterVendasPorCategoria
+      parameters:
+        - $ref: '#/components/parameters/dataInicio'
+        - $ref: '#/components/parameters/dataFim'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/tipoEntrega'
+      responses:
+        '200':
+          description: Categorias do maior para o menor faturamento
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      dados:
+                        type: array
+                        items: { $ref: '#/components/schemas/VendaPorCategoria' }
+        '400': { $ref: '#/components/responses/ParametroInvalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/AcessoNegado' }
+
+  /vendas/por-hora:
+    get:
+      tags: [Vendas]
+      summary: Pedidos por hora do dia (RF02)
+      operationId: obterVendasPorHora
+      parameters:
+        - $ref: '#/components/parameters/dataInicio'
+        - $ref: '#/components/parameters/dataFim'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/tipoEntrega'
+      responses:
+        '200':
+          description: Sempre 24 itens (0 a 23)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      dados:
+                        type: array
+                        minItems: 24
+                        maxItems: 24
+                        items: { $ref: '#/components/schemas/VendaPorHora' }
+        '400': { $ref: '#/components/responses/ParametroInvalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/AcessoNegado' }
+
+  /pedidos/situacao:
+    get:
+      tags: [Pedidos]
+      summary: Situação dos pedidos (RF03)
+      operationId: obterSituacaoPedidos
+      parameters:
+        - $ref: '#/components/parameters/dataInicio'
+        - $ref: '#/components/parameters/dataFim'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/tipoEntrega'
+      responses:
+        '200':
+          description: Contagem por status (todos os status) e tempo médio até a saída
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      dados: { $ref: '#/components/schemas/SituacaoPedidos' }
+        '400': { $ref: '#/components/responses/ParametroInvalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/AcessoNegado' }
+
+  /pedidos:
+    get:
+      tags: [Pedidos]
+      summary: Lista paginada dos pedidos do período (RF03)
+      operationId: listarPedidos
+      parameters:
+        - $ref: '#/components/parameters/dataInicio'
+        - $ref: '#/components/parameters/dataFim'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/tipoEntrega'
+        - name: pagina
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: tamanho
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+      responses:
+        '200':
+          description: Pedidos do mais recente para o mais antigo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      dados: { $ref: '#/components/schemas/PaginaPedidos' }
+        '400': { $ref: '#/components/responses/ParametroInvalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/AcessoNegado' }
+
+  /produtos/ranking:
+    get:
+      tags: [Produtos]
+      summary: Produtos mais vendidos (RF04)
+      operationId: obterRankingProdutos
+      parameters:
+        - $ref: '#/components/parameters/dataInicio'
+        - $ref: '#/components/parameters/dataFim'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/tipoEntrega'
+        - name: ordenarPor
+          in: query
+          schema: { type: string, enum: [QUANTIDADE, FATURAMENTO], default: QUANTIDADE }
+        - name: limite
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+        - name: categoria
+          in: query
+          schema: { type: string }
+          description: Restringe o ranking a uma categoria (ex. Pizza)
+      responses:
+        '200':
+          description: Ranking considerando apenas pedidos não cancelados
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      dados: { $ref: '#/components/schemas/RankingProdutos' }
+        '400': { $ref: '#/components/responses/ParametroInvalido' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/AcessoNegado' }
+
+  /filtros:
+    get:
+      tags: [Filtros]
+      summary: Valores aceitos pelos filtros (RF05)
+      operationId: obterOpcoesFiltro
+      responses:
+        '200':
+          description: Opções e limites
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpcoesFiltro' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/AcessoNegado' }
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Usuário ADMIN ou GERENTE. Indicado para integração com outros sistemas.
+    sessao:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+      description: Sessão criada pelo login nas telas; é como a página do dashboard consome a API.
+
+  parameters:
+    dataInicio:
+      name: dataInicio
+      in: query
+      description: Primeiro dia do período (inclusive). Padrão dataFim - 29 dias.
+      schema: { type: string, format: date, examples: ['2026-10-12'] }
+    dataFim:
+      name: dataFim
+      in: query
+      description: Último dia do período (inclusive). Padrão hoje. Período máximo de 366 dias.
+      schema: { type: string, format: date, examples: ['2026-11-10'] }
+    status:
+      name: status
+      in: query
+      description: Um ou mais status (repetir o parâmetro ou separar por vírgula). Padrão todos.
+      style: form
+      explode: true
+      schema:
+        type: array
+        items: { $ref: '#/components/schemas/StatusPedido' }
+    tipoEntrega:
+      name: tipoEntrega
+      in: query
+      schema: { $ref: '#/components/schemas/TipoEntrega' }
+
+  responses:
+    ParametroInvalido:
+      description: Parâmetro ausente, inválido ou fora dos limites
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example:
+            type: about:blank
+            title: Parâmetro inválido
+            status: 400
+            detail: dataInicio deve ser anterior ou igual a dataFim.
+            instance: /api/v1/dashboard/resumo
+            erros: { dataInicio: dataInicio deve ser anterior ou igual a dataFim. }
+    NaoAutenticado:
+      description: Sem autenticação ou credenciais inválidas
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example: { status: 401, title: Unauthorized, detail: Autenticação necessária. }
+    AcessoNegado:
+      description: Perfil sem acesso ao dashboard (ATENDENTE) ou método diferente de GET
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example: { status: 403, title: Forbidden, detail: 'Acesso negado: seu perfil não permite esta operação.' }
+
+  schemas:
+    StatusPedido:
+      type: string
+      enum: [RECEBIDO, EM_PREPARACAO, PRONTO, SAIU_PARA_ENTREGA, RETIRADO, FINALIZADO, CANCELADO]
+    TipoEntrega:
+      type: string
+      enum: [ENTREGA, RETIRADA]
+    Dinheiro:
+      type: number
+      description: Valor em reais com 2 casas decimais
+      examples: [46769.77]
+    Percentual:
+      type: number
+      description: Percentual de 0 a 100 com 2 casas decimais
+      examples: [8.44]
+
+    Filtros:
+      type: object
+      description: Filtros efetivamente aplicados, já com os valores padrão
+      required: [dataInicio, dataFim, status]
+      properties:
+        dataInicio: { type: string, format: date }
+        dataFim: { type: string, format: date }
+        status:
+          type: array
+          items: { $ref: '#/components/schemas/StatusPedido' }
+        tipoEntrega:
+          oneOf:
+            - $ref: '#/components/schemas/TipoEntrega'
+            - type: 'null'
+
+    Envelope:
+      type: object
+      required: [filtros, geradoEm, dados]
+      properties:
+        filtros: { $ref: '#/components/schemas/Filtros' }
+        geradoEm:
+          type: string
+          format: date-time
+          description: Momento em que os dados foram calculados
+        dados: {}
+
+    ResumoVendas:
+      type: object
+      properties:
+        faturamento: { $ref: '#/components/schemas/Dinheiro' }
+        totalPedidos: { type: integer }
+        pedidosValidos: { type: integer }
+        pedidosCancelados: { type: integer }
+        ticketMedio: { $ref: '#/components/schemas/Dinheiro' }
+        taxaCancelamento: { $ref: '#/components/schemas/Percentual' }
+        totalDescontos: { $ref: '#/components/schemas/Dinheiro' }
+        itensVendidos: { type: integer }
+        comparativo:
+          type: object
+          properties:
+            dataInicio: { type: string, format: date }
+            dataFim: { type: string, format: date }
+            faturamento: { $ref: '#/components/schemas/Dinheiro' }
+            pedidosValidos: { type: integer }
+            ticketMedio: { $ref: '#/components/schemas/Dinheiro' }
+            variacaoFaturamento: { type: [number, 'null'] }
+            variacaoPedidos: { type: [number, 'null'] }
+            variacaoTicketMedio: { type: [number, 'null'] }
+
+    SerieVendas:
+      type: object
+      properties:
+        agrupamento: { type: string, enum: [DIA, SEMANA, MES] }
+        pontos:
+          type: array
+          items:
+            type: object
+            properties:
+              periodo: { type: string, format: date, description: Primeiro dia do intervalo }
+              rotulo: { type: string, examples: ['04/11'] }
+              faturamento: { $ref: '#/components/schemas/Dinheiro' }
+              pedidos: { type: integer }
+              cancelados: { type: integer }
+              ticketMedio: { $ref: '#/components/schemas/Dinheiro' }
+
+    VendaPorCategoria:
+      type: object
+      properties:
+        categoria: { type: string }
+        quantidade: { type: integer }
+        faturamento: { $ref: '#/components/schemas/Dinheiro' }
+        participacao: { $ref: '#/components/schemas/Percentual' }
+
+    VendaPorHora:
+      type: object
+      properties:
+        hora: { type: integer, minimum: 0, maximum: 23 }
+        pedidos: { type: integer }
+        faturamento: { $ref: '#/components/schemas/Dinheiro' }
+
+    SituacaoPedidos:
+      type: object
+      properties:
+        total: { type: integer }
+        emAndamento: { type: integer }
+        finalizados: { type: integer }
+        cancelados: { type: integer }
+        tempoMedioAteSaidaMinutos: { type: [number, 'null'] }
+        porStatus:
+          type: array
+          items:
+            type: object
+            properties:
+              status: { $ref: '#/components/schemas/StatusPedido' }
+              descricao: { type: string }
+              quantidade: { type: integer }
+              valor: { $ref: '#/components/schemas/Dinheiro' }
+              percentual: { $ref: '#/components/schemas/Percentual' }
+
+    PedidoResumo:
+      type: object
+      properties:
+        id: { type: string }
+        dataHoraEntrada: { type: string, format: date-time }
+        nomeCliente: { type: string }
+        tipoEntrega: { $ref: '#/components/schemas/TipoEntrega' }
+        status: { $ref: '#/components/schemas/StatusPedido' }
+        statusDescricao: { type: string }
+        valorTotal: { $ref: '#/components/schemas/Dinheiro' }
+        quantidadeItens: { type: integer }
+        responsavelEntrada: { type: string }
+        dataHoraSaida: { type: [string, 'null'], format: date-time }
+
+    PaginaPedidos:
+      type: object
+      properties:
+        conteudo:
+          type: array
+          items: { $ref: '#/components/schemas/PedidoResumo' }
+        pagina: { type: integer }
+        tamanho: { type: integer }
+        totalPaginas: { type: integer }
+        totalElementos: { type: integer }
+
+    RankingProdutos:
+      type: object
+      properties:
+        ordenarPor: { type: string, enum: [QUANTIDADE, FATURAMENTO] }
+        categoria: { type: [string, 'null'] }
+        limite: { type: integer }
+        faturamentoTotal: { $ref: '#/components/schemas/Dinheiro' }
+        quantidadeTotal: { type: integer }
+        produtos:
+          type: array
+          items:
+            type: object
+            properties:
+              posicao: { type: integer }
+              produtoId: { type: string }
+              nome: { type: string }
+              categoria: { type: string }
+              quantidade: { type: integer }
+              faturamento: { $ref: '#/components/schemas/Dinheiro' }
+              pedidos: { type: integer, description: Em quantos pedidos o produto apareceu }
+              participacao: { $ref: '#/components/schemas/Percentual' }
+
+    Opcao:
+      type: object
+      properties:
+        valor: { type: string }
+        descricao: { type: string }
+
+    OpcoesFiltro:
+      type: object
+      properties:
+        status: { type: array, items: { $ref: '#/components/schemas/Opcao' } }
+        tiposEntrega: { type: array, items: { $ref: '#/components/schemas/Opcao' } }
+        categorias: { type: array, items: { type: string } }
+        agrupamentos: { type: array, items: { $ref: '#/components/schemas/Opcao' } }
+        criteriosRanking: { type: array, items: { $ref: '#/components/schemas/Opcao' } }
+        dataInicioPadrao: { type: string, format: date }
+        dataFimPadrao: { type: string, format: date }
+        maximoDiasPeriodo: { type: integer, examples: [366] }
+        maximoTamanhoPagina: { type: integer, examples: [100] }
+        maximoLimiteRanking: { type: integer, examples: [50] }
+
+    Problema:
+      type: object
+      description: ProblemDetail (RFC 9457)
+      required: [status, title]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        erros:
+          type: object
+          additionalProperties: { type: string }
+          description: Mensagem por parâmetro inválido
