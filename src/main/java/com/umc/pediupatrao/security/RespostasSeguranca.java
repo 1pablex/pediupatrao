@@ -34,7 +34,10 @@ public final class RespostasSeguranca {
     public static AuthenticationEntryPoint naoAutenticadoApi() {
         return (request, response, ex) -> {
             log.warn("Acesso nao autenticado: metodo={} url={}", request.getMethod(), request.getRequestURI());
-            response.setHeader("WWW-Authenticate", "Basic realm=\"pediupatrao\"");
+            // Chamadas AJAX do dashboard não recebem o desafio Basic, para o navegador não abrir a janela de login.
+            if (!"XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+                response.setHeader("WWW-Authenticate", "Basic realm=\"pediupatrao\"");
+            }
             escreverJson(response, HttpStatus.UNAUTHORIZED, "Autenticação necessária.");
         };
     }

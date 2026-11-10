@@ -1,5 +1,6 @@
 package com.umc.pediupatrao.controller.api;
 
+import com.umc.pediupatrao.exception.ParametroInvalidoException;
 import com.umc.pediupatrao.exception.RecursoNaoEncontradoException;
 import com.umc.pediupatrao.exception.RegraNegocioException;
 import java.util.LinkedHashMap;
@@ -37,6 +38,13 @@ public class ApiExceptionHandler {
         return problema(HttpStatus.NOT_FOUND, "Recurso não encontrado", ex.getMessage());
     }
 
+    @ExceptionHandler(ParametroInvalidoException.class)
+    public ProblemDetail parametroInvalido(ParametroInvalidoException ex) {
+        ProblemDetail problema = problema(HttpStatus.BAD_REQUEST, "Parâmetro inválido", ex.getMessage());
+        problema.setProperty("erros", Map.of(ex.getParametro(), ex.getMessage()));
+        return problema;
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail validacao(MethodArgumentNotValidException ex) {
         Map<String, String> erros = new LinkedHashMap<>();
@@ -49,10 +57,18 @@ public class ApiExceptionHandler {
         return problema;
     }
 
-    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
-    public ProblemDetail requisicaoInvalida(Exception ex) {
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail requisicaoInvalida(HttpMessageNotReadableException ex) {
         return problema(HttpStatus.BAD_REQUEST, "Requisição inválida",
-                "O corpo ou os parâmetros da requisição estão em formato inválido.");
+                "O corpo da requisição está em formato inválido.");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail parametroComTipoInvalido(MethodArgumentTypeMismatchException ex) {
+        String detalhe = "Valor inválido para o parâmetro '" + ex.getName() + "'.";
+        ProblemDetail problema = problema(HttpStatus.BAD_REQUEST, "Parâmetro inválido", detalhe);
+        problema.setProperty("erros", Map.of(ex.getName(), detalhe));
+        return problema;
     }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)

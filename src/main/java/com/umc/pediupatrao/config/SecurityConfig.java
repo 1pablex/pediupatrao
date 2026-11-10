@@ -24,8 +24,8 @@ import org.springframework.security.web.SecurityFilterChain;
  * 2) @PreAuthorize nos serviços (habilitado por @EnableMethodSecurity), que protege a regra
  *    mesmo que um novo controlador seja criado sem a regra de URL correspondente.
  *
- * Perfis: ADMIN (usuários, consulta de pedidos e auditoria), GERENTE (pedidos, descontos,
- * cancelamentos, consulta de clientes e auditoria) e ATENDENTE (clientes e registro de pedidos).
+ * Perfis: ADMIN (usuários, consulta de pedidos, auditoria e dashboard), GERENTE (pedidos, descontos,
+ * cancelamentos, consulta de clientes, auditoria e dashboard) e ATENDENTE (clientes e registro de pedidos).
  */
 @Configuration
 @EnableWebSecurity
@@ -43,11 +43,37 @@ public class SecurityConfig {
     }
 
     /**
+     * API do dashboard (/api/v1/dashboard/**): somente leitura (GET), para ADMIN e GERENTE.
+     * Aceita a sessão de quem já entrou nas telas (é assim que a página do dashboard consome a API)
+     * e também HTTP Basic, para integração com outros sistemas. A sessão nunca é criada aqui.
+     * O CSRF continua ativo, mas só métodos seguros (GET) são permitidos; os demais recebem 403.
+     */
+    @Bean
+    @Order(1)
+    public SecurityFilterChain dashboardApiFilterChain(HttpSecurity http,
+            UsuarioDetailsService usuarioDetailsService) throws Exception {
+        http
+                .securityMatcher("/api/v1/dashboard/**")
+                .userDetailsService(usuarioDetailsService)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(GET, "/api/v1/dashboard/**").hasAnyRole(ADMIN, GERENTE)
+                        .anyRequest().denyAll()
+                )
+                .httpBasic(basic -> basic.authenticationEntryPoint(RespostasSeguranca.naoAutenticadoApi()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.NEVER))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(RespostasSeguranca.naoAutenticadoApi())
+                        .accessDeniedHandler(RespostasSeguranca.acessoNegadoApi()));
+
+        return http.build();
+    }
+
+    /**
      * API REST (/api/**): autenticação HTTP Basic e sem sessão.
      * Como a API não usa cookie de sessão, não está sujeita a CSRF; por isso o CSRF é desligado só aqui.
      */
     @Bean
-    @Order(1)
+    @Order(2)
     public SecurityFilterChain apiFilterChain(HttpSecurity http, UsuarioDetailsService usuarioDetailsService)
             throws Exception {
         http
@@ -84,7 +110,7 @@ public class SecurityConfig {
      * (o Thymeleaf insere o token automaticamente em todo formulário com th:action).
      */
     @Bean
-    @Order(2)
+    @Order(3)
     public SecurityFilterChain webFilterChain(HttpSecurity http, UsuarioDetailsService usuarioDetailsService)
             throws Exception {
         http
@@ -94,6 +120,7 @@ public class SecurityConfig {
                                 "/dist/**", "/favicon.ico").permitAll()
                         .requestMatchers("/usuarios/**").hasRole(ADMIN)
                         .requestMatchers("/auditoria/**").hasAnyRole(ADMIN, GERENTE)
+                        .requestMatchers("/dashboard/**").hasAnyRole(ADMIN, GERENTE)
                         .requestMatchers(POST, "/pedidos/*/desconto", "/pedidos/*/cancelar").hasRole(GERENTE)
                         .requestMatchers("/pedidos/novo").hasAnyRole(GERENTE, ATENDENTE)
                         .requestMatchers(POST, "/pedidos/**").hasAnyRole(GERENTE, ATENDENTE)
