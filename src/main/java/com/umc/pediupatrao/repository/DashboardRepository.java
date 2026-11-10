@@ -60,7 +60,15 @@ public class DashboardRepository {
     }
 
     /** Valores agregados por uma chave (dia, hora, status, categoria...). */
-    public record Agregado(long pedidos, long cancelados, BigDecimal faturamento) {
+    public record Agregado(long pedidos, long cancelados, BigDecimal faturamento, BigDecimal descontos) {
+
+        public Agregado(long pedidos, long cancelados, BigDecimal faturamento) {
+            this(pedidos, cancelados, faturamento, BigDecimal.ZERO);
+        }
+    }
+
+    /** Agregado de uma célula do mapa de calor: dia da semana ISO (1 = segunda ... 7 = domingo) e hora. */
+    public record Celula(int diaSemana, int hora, Agregado valores) {
     }
 
     public record ItemVendido(String produtoId, String nome, String categoria, long quantidade,
@@ -125,6 +133,19 @@ public class DashboardRepository {
             mapa.put(d.getInteger("_id"), agregado(d));
         }
         return mapa;
+    }
+
+    /** Vendas por dia da semana e hora da entrada, no fuso da aplicação (mapa de calor). */
+    public List<Celula> porDiaEHora(FiltroDashboard filtro) {
+        Document data = new Document("date", "$dataHoraEntrada").append("timezone", zona.getId());
+        Document chave = new Document("dia", new Document("$isoDayOfWeek", data))
+                .append("hora", new Document("$hour", data));
+        List<Celula> celulas = new ArrayList<>();
+        for (Document d : agregar(List.of(match(filtro, true), agrupadoPor(chave)))) {
+            Document id = d.get("_id", Document.class);
+            celulas.add(new Celula(id.getInteger("dia"), id.getInteger("hora"), agregado(d)));
+        }
+        return celulas;
     }
 
     /** Chave: status do pedido. Aqui "faturamento" é o valor total dos pedidos naquele status. */
@@ -282,7 +303,8 @@ public class DashboardRepository {
         return new Document("$group", new Document("_id", chave)
                 .append("pedidos", soma(seCancelado(0, 1)))
                 .append("cancelados", soma(seCancelado(1, 0)))
-                .append("faturamento", soma(seCancelado(ZERO, decimal("$valorTotal")))));
+                .append("faturamento", soma(seCancelado(ZERO, decimal("$valorTotal"))))
+                .append("descontos", soma(seCancelado(ZERO, decimal("$valorDesconto")))));
     }
 
     private static Document seCancelado(Object entao, Object senao) {
@@ -310,7 +332,8 @@ public class DashboardRepository {
     }
 
     private static Agregado agregado(Document d) {
-        return new Agregado(inteiro(d, "pedidos"), inteiro(d, "cancelados"), decimal(d, "faturamento"));
+        return new Agregado(inteiro(d, "pedidos"), inteiro(d, "cancelados"), decimal(d, "faturamento"),
+                decimal(d, "descontos"));
     }
 
     private static long inteiro(Document d, String campo) {

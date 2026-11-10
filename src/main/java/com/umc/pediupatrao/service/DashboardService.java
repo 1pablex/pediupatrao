@@ -11,6 +11,7 @@ import com.umc.pediupatrao.dto.dashboard.ResumoVendas;
 import com.umc.pediupatrao.dto.dashboard.SerieVendas;
 import com.umc.pediupatrao.dto.dashboard.SituacaoPedidos;
 import com.umc.pediupatrao.dto.dashboard.VendaPorCategoria;
+import com.umc.pediupatrao.dto.dashboard.VendaPorDiaHora;
 import com.umc.pediupatrao.dto.dashboard.VendaPorHora;
 import com.umc.pediupatrao.entity.StatusPedido;
 import com.umc.pediupatrao.entity.TipoEntrega;
@@ -26,10 +27,13 @@ import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.data.domain.PageImpl;
@@ -54,6 +58,8 @@ public class DashboardService {
     public static final int TAMANHO_MAXIMO_PAGINA = 100;
 
     private static final BigDecimal CEM = new BigDecimal("100");
+    private static final Agregado VAZIO = new Agregado(0, 0, BigDecimal.ZERO);
+    private static final Locale PT_BR = Locale.forLanguageTag("pt-BR");
     private static final Set<StatusPedido> EM_ANDAMENTO = Set.of(StatusPedido.RECEBIDO,
             StatusPedido.EM_PREPARACAO, StatusPedido.PRONTO, StatusPedido.SAIU_PARA_ENTREGA);
     private static final DateTimeFormatter ROTULO_DIA = DateTimeFormatter.ofPattern("dd/MM");
@@ -94,18 +100,43 @@ public class DashboardService {
 
     public SerieVendas serie(FiltroDashboard filtro, Agrupamento agrupamento) {
         Agrupamento grupo = agrupamento == null ? Agrupamento.DIA : agrupamento;
+        FiltroDashboard filtroAnterior = filtro.periodoAnterior();
         Map<String, Agregado> valores = repository.seriePorPeriodo(filtro, grupo);
+        Map<String, Agregado> valoresAnteriores = repository.seriePorPeriodo(filtroAnterior, grupo);
 
+        List<LocalDate> intervalos = intervalos(filtro, grupo);
+        List<LocalDate> intervalosAnteriores = intervalos(filtroAnterior, grupo);
         List<SerieVendas.Ponto> pontos = new ArrayList<>();
-        for (LocalDate inicio = alinhar(filtro.dataInicio(), grupo); !inicio.isAfter(filtro.dataFim());
-                inicio = avancar(inicio, grupo)) {
-            Agregado a = valores.get(inicio.toString());
-            long pedidos = a == null ? 0 : a.pedidos();
-            BigDecimal faturamento = a == null ? BigDecimal.ZERO : a.faturamento();
-            pontos.add(new SerieVendas.Ponto(inicio.toString(), rotulo(inicio, grupo), moeda(faturamento), pedidos,
-                    a == null ? 0 : a.cancelados(), dividir(faturamento, pedidos)));
+        for (int i = 0; i < intervalos.size(); i++) {
+            LocalDate inicio = intervalos.get(i);
+            Agregado a = valores.getOrDefault(inicio.toString(), VAZIO);
+            // compara cada intervalo com o de mesma posição no período anterior
+            LocalDate inicioAnterior = i < intervalosAnteriores.size() ? intervalosAnteriores.get(i) : null;
+            Agregado b = inicioAnterior == null ? VAZIO : valoresAnteriores.getOrDefault(inicioAnterior.toString(), VAZIO);
+            pontos.add(new SerieVendas.Ponto(inicio.toString(), rotulo(inicio, grupo), moeda(a.faturamento()),
+                    a.pedidos(), a.cancelados(), dividir(a.faturamento(), a.pedidos()), moeda(a.descontos()),
+                    inicioAnterior == null ? null : inicioAnterior.toString(), moeda(b.faturamento()), b.pedidos(),
+                    dividir(b.faturamento(), b.pedidos())));
         }
         return new SerieVendas(grupo, pontos);
+    }
+
+    /** Mapa de calor: as 168 combinações de dia da semana (segunda a domingo) e hora, zeradas quando não há vendas. */
+    public List<VendaPorDiaHora> porDiaEHora(FiltroDashboard filtro) {
+        Map<Integer, Agregado> valores = new HashMap<>();
+        for (DashboardRepository.Celula c : repository.porDiaEHora(filtro)) {
+            valores.put(c.diaSemana() * 100 + c.hora(), c.valores());
+        }
+        List<VendaPorDiaHora> celulas = new ArrayList<>(7 * 24);
+        for (DayOfWeek dia : DayOfWeek.values()) {
+            String nome = dia.getDisplayName(TextStyle.SHORT, PT_BR);
+            String abreviacao = Character.toUpperCase(nome.charAt(0)) + nome.substring(1).replace(".", "");
+            for (int hora = 0; hora < 24; hora++) {
+                Agregado a = valores.getOrDefault(dia.getValue() * 100 + hora, VAZIO);
+                celulas.add(new VendaPorDiaHora(dia.getValue(), abreviacao, hora, a.pedidos(), moeda(a.faturamento())));
+            }
+        }
+        return celulas;
     }
 
     public List<VendaPorHora> porHora(FiltroDashboard filtro) {
@@ -210,6 +241,15 @@ public class DashboardService {
     }
 
     // ------------------------------------------------------------------ cálculos
+
+    private static List<LocalDate> intervalos(FiltroDashboard filtro, Agrupamento grupo) {
+        List<LocalDate> lista = new ArrayList<>();
+        for (LocalDate inicio = alinhar(filtro.dataInicio(), grupo); !inicio.isAfter(filtro.dataFim());
+                inicio = avancar(inicio, grupo)) {
+            lista.add(inicio);
+        }
+        return lista;
+    }
 
     static LocalDate alinhar(LocalDate data, Agrupamento agrupamento) {
         return switch (agrupamento) {

@@ -158,6 +158,17 @@ class SegurancaDashboardApiTest {
         verify(dashboardService).pedidos(any(), eq(0), eq(5));
     }
 
+    @Test
+    void mapaDeCalorSoParaAdminEGerente() throws Exception {
+        when(dashboardService.porDiaEHora(any())).thenReturn(List.of());
+
+        mvc.perform(get("/api/v1/dashboard/vendas/por-dia-hora").with(user("gerente01").roles("GERENTE")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dados").isArray());
+        mvc.perform(get("/api/v1/dashboard/vendas/por-dia-hora").with(user("atendente01").roles("ATENDENTE")))
+                .andExpect(status().isForbidden());
+    }
+
     private static ResumoVendas resumoVazio() {
         return new ResumoVendas(BigDecimal.ZERO, 0, 0, 0, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0,
                 new ResumoVendas.Comparativo(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 30), BigDecimal.ZERO,

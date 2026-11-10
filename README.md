@@ -89,7 +89,7 @@ com os dados agregados direto no MongoDB.
 | Requisito | Na tela | Na API |
 |-----------|---------|--------|
 | RF01 Indicadores gerais | Faturamento, pedidos, ticket médio, cancelamentos e descontos, com variação sobre o período anterior | `GET /resumo` |
-| RF02 Análise de vendas | Evolução por dia, semana ou mês, faturamento por categoria e pedidos por horário | `GET /vendas/serie`, `/vendas/por-categoria`, `/vendas/por-hora` |
+| RF02 Análise de vendas | Evolução por dia, semana ou mês comparada ao período anterior, faturamento por categoria e mapa de calor por dia e horário | `GET /vendas/serie`, `/vendas/por-categoria`, `/vendas/por-dia-hora` |
 | RF03 Situação dos pedidos | Pedidos por status, em andamento, tempo médio até a saída e lista paginada | `GET /pedidos/situacao`, `/pedidos` |
 | RF04 Produtos mais vendidos | Ranking por quantidade ou faturamento, com participação | `GET /produtos/ranking` |
 | RF05 Filtros | Período, status, tipo e categoria em uma linha, guardados na URL | Parâmetros comuns e `GET /filtros` |

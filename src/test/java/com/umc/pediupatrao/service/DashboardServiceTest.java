@@ -115,8 +115,10 @@ class DashboardServiceTest {
     void serieDiariaPreencheDiasSemVendaComZero() {
         FiltroDashboard filtro = filtro("2026-11-01", "2026-11-05");
         when(repository.seriePorPeriodo(filtro, Agrupamento.DIA)).thenReturn(Map.of(
-                "2026-11-02", new Agregado(4, 1, new BigDecimal("200.00")),
+                "2026-11-02", new Agregado(4, 1, new BigDecimal("200.00"), new BigDecimal("10.00")),
                 "2026-11-04", new Agregado(1, 0, new BigDecimal("55.50"))));
+        when(repository.seriePorPeriodo(filtro.periodoAnterior(), Agrupamento.DIA)).thenReturn(Map.of(
+                "2026-10-28", new Agregado(2, 0, new BigDecimal("150.00"))));
 
         SerieVendas serie = service.serie(filtro, Agrupamento.DIA);
 
@@ -127,13 +129,52 @@ class DashboardServiceTest {
         assertThat(dia2.rotulo()).isEqualTo("02/11");
         assertThat(dia2.ticketMedio()).isEqualByComparingTo("50.00");
         assertThat(dia2.cancelados()).isEqualTo(1);
+        assertThat(dia2.descontos()).isEqualByComparingTo("10.00");
+    }
+
+    @Test
+    void serieTrazOIntervaloCorrespondenteDoPeriodoAnterior() {
+        FiltroDashboard filtro = filtro("2026-11-01", "2026-11-05");
+        when(repository.seriePorPeriodo(filtro, Agrupamento.DIA)).thenReturn(Map.of());
+        when(repository.seriePorPeriodo(filtro.periodoAnterior(), Agrupamento.DIA)).thenReturn(Map.of(
+                "2026-10-28", new Agregado(2, 0, new BigDecimal("150.00"))));
+
+        SerieVendas serie = service.serie(filtro, Agrupamento.DIA);
+
+        // o período anterior de 01/11 a 05/11 é 27/10 a 31/10: o 2º ponto corresponde a 28/10
+        SerieVendas.Ponto ponto = serie.pontos().get(1);
+        assertThat(ponto.periodoAnterior()).isEqualTo("2026-10-28");
+        assertThat(ponto.faturamentoAnterior()).isEqualByComparingTo("150.00");
+        assertThat(ponto.pedidosAnterior()).isEqualTo(2);
+        assertThat(ponto.ticketMedioAnterior()).isEqualByComparingTo("75.00");
+        assertThat(serie.pontos().get(0).periodoAnterior()).isEqualTo("2026-10-27");
+    }
+
+    @Test
+    void mapaDeCalorTrazAs168CelulasComecandoNaSegunda() {
+        FiltroDashboard filtro = filtro("2026-11-01", "2026-11-07");
+        when(repository.porDiaEHora(filtro)).thenReturn(List.of(
+                new DashboardRepository.Celula(5, 21, new Agregado(9, 0, new BigDecimal("900")))));
+
+        List<com.umc.pediupatrao.dto.dashboard.VendaPorDiaHora> celulas = service.porDiaEHora(filtro);
+
+        assertThat(celulas).hasSize(168);
+        assertThat(celulas.get(0).dia()).isEqualTo("Seg");
+        assertThat(celulas.get(0).diaSemana()).isEqualTo(1);
+        assertThat(celulas.get(167).dia()).isEqualTo("Dom");
+        assertThat(celulas).filteredOn(c -> c.diaSemana() == 5 && c.hora() == 21).singleElement()
+                .satisfies(c -> {
+                    assertThat(c.dia()).isEqualTo("Sex");
+                    assertThat(c.pedidos()).isEqualTo(9);
+                });
+        assertThat(celulas.stream().mapToLong(c -> c.pedidos()).sum()).isEqualTo(9);
     }
 
     @Test
     void serieSemanalComecaNaSegundaFeira() {
         // 05/11/2026 é quinta-feira: a primeira semana começa na segunda 02/11
         FiltroDashboard filtro = filtro("2026-11-05", "2026-11-20");
-        when(repository.seriePorPeriodo(filtro, Agrupamento.SEMANA)).thenReturn(Map.of());
+        when(repository.seriePorPeriodo(any(), eq(Agrupamento.SEMANA))).thenReturn(Map.of());
 
         SerieVendas serie = service.serie(filtro, Agrupamento.SEMANA);
 
@@ -144,7 +185,7 @@ class DashboardServiceTest {
     @Test
     void serieMensalUsaOPrimeiroDiaDoMes() {
         FiltroDashboard filtro = filtro("2026-09-15", "2026-11-10");
-        when(repository.seriePorPeriodo(filtro, Agrupamento.MES)).thenReturn(Map.of());
+        when(repository.seriePorPeriodo(any(), eq(Agrupamento.MES))).thenReturn(Map.of());
 
         SerieVendas serie = service.serie(filtro, Agrupamento.MES);
 

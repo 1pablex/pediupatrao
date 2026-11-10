@@ -65,9 +65,13 @@ Implementação: `GET /api/v1/dashboard/resumo` e os cartões do topo do dashboa
 ### RF02 - Análise de vendas (gráficos)
 
 - **Evolução das vendas** em linha, agrupada por dia, semana (começando na segunda-feira) ou mês, com troca entre
-  faturamento, quantidade de pedidos e ticket médio.
+  faturamento, quantidade de pedidos e ticket médio (clicando no indicador correspondente) e uma segunda linha com o
+  **período anterior**. Ao passar o mouse, uma linha vertical e um quadro mostram o valor do intervalo, o valor
+  anterior e a variação.
 - **Faturamento por categoria** de produto, em barras horizontais ordenadas.
-- **Pedidos por horário** do dia (0h a 23h), com destaque para o horário de pico.
+- **Mapa de calor do movimento** por dia da semana e horário, com o pico destacado e o detalhe de cada célula ao
+  passar o mouse ou focar pelo teclado.
+- Cada indicador traz um mini gráfico de tendência do período.
 
 Critérios de aceitação:
 
@@ -75,12 +79,14 @@ Critérios de aceitação:
 - Cada gráfico tem tooltip com o valor exato e uma tabela equivalente ("Ver dados em tabela").
 - Nenhum gráfico usa dois eixos verticais: as métricas de escalas diferentes se alternam no mesmo gráfico.
 
-Implementação: `GET /vendas/serie`, `GET /vendas/por-categoria`, `GET /vendas/por-hora`.
+Implementação: `GET /vendas/serie`, `GET /vendas/por-categoria`, `GET /vendas/por-dia-hora` (e
+`GET /vendas/por-hora`, que agrega só por hora, para integrações).
 
 ### RF03 - Situação dos pedidos
 
 - Quantidade de pedidos em cada status do fluxo (todos os status aparecem, inclusive com zero), pedidos em
-  andamento, finalizados, cancelados e o **tempo médio entre a entrada e a saída** do pedido.
+  andamento etapa por etapa, finalizados, cancelados e o **tempo médio entre a entrada e a saída** do pedido.
+- Clicar em um status filtra a lista de pedidos.
 - Lista paginada dos pedidos do período, do mais recente para o mais antigo, com acesso ao detalhe do pedido.
 
 Implementação: `GET /pedidos/situacao` e `GET /pedidos`.
@@ -89,7 +95,7 @@ Implementação: `GET /pedidos/situacao` e `GET /pedidos`.
 
 - Ranking dos produtos ordenável por **quantidade** ou por **faturamento**, com posição, categoria, quantidade,
   faturamento, número de pedidos em que apareceu e participação no faturamento total.
-- Pode ser restrito a uma categoria.
+- Pode ser restrito a uma categoria, inclusive clicando na categoria no gráfico de faturamento por categoria.
 
 Critérios de aceitação:
 
@@ -172,14 +178,14 @@ Tratamento na tela:
 | RNF02 | Segurança | API somente leitura. | Apenas `GET`; outros métodos recebem 403. |
 | RNF03 | Segurança | Autenticação para tela e integração. | Sessão das telas (CSRF continua ativo) e HTTP Basic; a API nunca cria sessão. |
 | RNF04 | Segurança | Sem vazamento de dados ou detalhes internos. | Erros em ProblemDetail sem stack trace; textos escapados no navegador (sem XSS); a lista de pedidos expõe só o necessário (sem telefone ou endereço). |
-| RNF05 | Desempenho | Respostas abaixo de 1 segundo com milhares de pedidos. | Agregações executadas no MongoDB (só os totais trafegam), índice em `dataHoraEntrada`; medido entre 75 e 260 ms com cerca de 1.300 pedidos ([evidências](evidencias/chamadas-api.md)). |
+| RNF05 | Desempenho | Respostas abaixo de 1 segundo com milhares de pedidos. | Agregações executadas no MongoDB (só os totais trafegam), índice em `dataHoraEntrada`; medido entre 75 e 230 ms com cerca de 1.300 pedidos ([evidências](evidencias/chamadas-api.md)). |
 | RNF06 | Desempenho | Evitar respostas grandes. | Lista de pedidos paginada (máx. 100) e ranking limitado (máx. 50). |
 | RNF07 | Confiabilidade | Dados inconsistentes ou antigos não podem derrubar o dashboard. | Conversões seguras no pipeline (`$convert` com padrão), status desconhecidos ignorados, falha isolada por painel. |
 | RNF08 | Usabilidade | Leitura rápida dos indicadores. | Faturamento em destaque, comparativo com período nomeado, valores em reais e datas no formato brasileiro, eixos compactos (R$ 10 mil). |
 | RNF09 | Acessibilidade | Informação não depende só de cor nem de passar o mouse. | Tabela equivalente em cada gráfico, setas e texto na variação, `aria-label` nos gráficos, status com rótulo. |
 | RNF10 | Compatibilidade | Funcionar nos navegadores atuais, também em telas menores. | Bootstrap 5 responsivo e Chart.js 4, versões fixas no CDN. |
 | RNF11 | Manutenibilidade | Código em camadas e testável. | Controller, validação de filtros, service com as regras e repository com as consultas; relógio injetável (`Clock`). |
-| RNF12 | Testabilidade | Regras verificadas automaticamente. | 111 testes: unidade, segurança (MockMvc) e integração com MongoDB real ([evidências](evidencias-testes.md)). |
+| RNF12 | Testabilidade | Regras verificadas automaticamente. | 116 testes: unidade, segurança (MockMvc) e integração com MongoDB real ([evidências](evidencias-testes.md)). |
 | RNF13 | Interoperabilidade | Contrato estável e documentado. | API versionada em `/api/v1`, JSON em camelCase, envelope padrão, especificação OpenAPI 3.1. |
 | RNF14 | Portabilidade | Configuração fora do código. | Conexão e senhas em variáveis de ambiente (`.env`); dados de demonstração ligados por `DEMO_GERAR_DADOS`. |
 
@@ -217,7 +223,9 @@ que já gravava nome e preço, para que mudanças no cadastro não alterem o his
 | **Comparativo com o período anterior de mesma duração**. | Responde à pergunta "estamos vendendo mais ou menos?" sem que o usuário precise montar dois filtros. |
 | **Rateio do desconto entre os itens**. | Sem o rateio, a soma do ranking ficaria maior que o faturamento real. |
 | **Preencher intervalos sem venda com zero**. | Um gráfico que pula dias parados esconde exatamente o que o gerente precisa ver. |
-| **Gráficos de uma cor, destaque só onde importa** (pico de horário) e **sem eixo duplo**. | Leitura mais rápida e honesta; tabela equivalente para acessibilidade. |
+| **Cores por papel**: roxo para o período atual e as barras, cinza lilás para o período anterior, laranja só para destaque (pico, 1º lugar, seleção) e uma rampa de um só tom no mapa de calor; **sem eixo duplo**. | Leitura rápida e honesta; o destaque chama atenção só para o que importa; tabela equivalente para acessibilidade. |
+| **Filtros cruzados**: indicador troca a métrica, categoria filtra o ranking, status filtra a lista de pedidos, sempre com etiqueta removível e guardados na URL. | Deixa explorar os dados sem sair do painel, e fica claro o que está filtrado. |
+| **Comparação com o período anterior dentro do gráfico** e **mapa de calor dia x hora**. | Mostram tendência e sazonalidade (fins de semana, jantar) melhor que um número isolado ou barras por hora. |
 | **Gerador de dados de demonstração opcional**, só com banco vazio. | Permite demonstrar tendências (90 dias, fins de semana mais fortes, pico no jantar) sem nunca misturar dados fictícios com reais. |
 | **Gitflow**: `feature/dashboard-api`, `feature/dashboard-ui` e `feature/documentacao` integradas em `develop`, `release/2.0.0` publicada em `main` com tag `v2.0.0`. | Histórico separado por responsabilidade e entrega rastreável. |
 
