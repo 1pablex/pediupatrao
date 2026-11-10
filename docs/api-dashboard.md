@@ -13,6 +13,7 @@ aplicação com o banco de demonstração (`DEMO_GERAR_DADOS=true`), encurtadas 
 | GET | [`/vendas/serie`](#get-vendasserie) | Evolução das vendas por dia, semana ou mês | RF02 |
 | GET | [`/vendas/por-categoria`](#get-vendaspor-categoria) | Faturamento por categoria de produto | RF02 |
 | GET | [`/vendas/por-hora`](#get-vendaspor-hora) | Pedidos por hora do dia (horário de pico) | RF02 |
+| GET | [`/vendas/por-dia-hora`](#get-vendaspor-dia-hora) | Mapa de calor: pedidos por dia da semana e hora | RF02 |
 | GET | [`/pedidos/situacao`](#get-pedidossituacao) | Pedidos por status e tempo médio até a saída | RF03 |
 | GET | [`/pedidos`](#get-pedidos) | Lista paginada dos pedidos do período | RF03 |
 | GET | [`/produtos/ranking`](#get-produtosranking) | Produtos mais vendidos | RF04 |
@@ -159,7 +160,8 @@ Erros: `400`, `401`, `403`.
 
 ## GET /vendas/serie
 
-Série temporal de vendas (RF02). Todo intervalo do período aparece, inclusive sem vendas.
+Série temporal de vendas (RF02). Todo intervalo do período aparece, inclusive sem vendas. Cada ponto traz também
+o intervalo de mesma posição no período anterior, usado na linha de comparação do gráfico.
 
 | Parâmetro | Tipo | Padrão | Descrição |
 |-----------|------|--------|-----------|
@@ -174,20 +176,35 @@ Resposta `200`:
 ```json
 {
   "filtros": { "dataInicio": "2026-11-04", "dataFim": "2026-11-10", "status": [], "tipoEntrega": null },
-  "geradoEm": "2026-11-10T13:13:56.1591802-03:00",
+  "geradoEm": "2026-11-10T16:22:19.1672249-03:00",
   "dados": {
     "agrupamento": "DIA",
     "pontos": [
-      { "periodo": "2026-11-04", "rotulo": "04/11", "faturamento": 1379.48, "pedidos": 15, "cancelados": 1, "ticketMedio": 91.97 },
-      { "periodo": "2026-11-05", "rotulo": "05/11", "faturamento": 1445.76, "pedidos": 13, "cancelados": 0, "ticketMedio": 111.21 },
-      { "periodo": "2026-11-06", "rotulo": "06/11", "faturamento": 2270.98, "pedidos": 20, "cancelados": 2, "ticketMedio": 113.55 },
+      {
+        "periodo": "2026-11-04", "rotulo": "04/11",
+        "faturamento": 1379.48, "pedidos": 15, "cancelados": 1, "ticketMedio": 91.97, "descontos": 12.32,
+        "periodoAnterior": "2026-10-28",
+        "faturamentoAnterior": 1932.28, "pedidosAnterior": 15, "ticketMedioAnterior": 128.82
+      },
+      {
+        "periodo": "2026-11-05", "rotulo": "05/11",
+        "faturamento": 1445.76, "pedidos": 13, "cancelados": 0, "ticketMedio": 111.21, "descontos": 8.24,
+        "periodoAnterior": "2026-10-29",
+        "faturamentoAnterior": 1525.7, "pedidosAnterior": 15, "ticketMedioAnterior": 101.71
+      },
       ...
     ]
   }
 }
 ```
 
-`pedidos` e `faturamento` consideram só os não cancelados; `cancelados` conta os cancelados do intervalo.
+| Campo | Descrição |
+|-------|-----------|
+| `faturamento`, `pedidos`, `ticketMedio` | Só pedidos não cancelados do intervalo. |
+| `cancelados` | Pedidos cancelados do intervalo. |
+| `descontos` | Descontos concedidos nos pedidos não cancelados do intervalo. |
+| `periodoAnterior` | Início do intervalo de mesma posição no período anterior (ex.: o 1º dia é comparado ao 1º dia do período anterior); `null` se não houver. |
+| `faturamentoAnterior`, `pedidosAnterior`, `ticketMedioAnterior` | Valores desse intervalo anterior. |
 
 Erros: `400` (inclusive `agrupamento` inválido), `401`, `403`.
 
@@ -251,6 +268,43 @@ Resposta `200`:
   ]
 }
 ```
+
+Erros: `400`, `401`, `403`.
+
+---
+
+## GET /vendas/por-dia-hora
+
+Mapa de calor do movimento: pedidos não cancelados por **dia da semana e hora** da entrada (RF02). Sempre traz as
+168 combinações (7 dias x 24 horas), de segunda a domingo, com zero onde não houve vendas.
+
+Parâmetros: apenas os [comuns](#parâmetros-comuns-filtros).
+
+```bash
+curl -u gerente01:SENHA "http://localhost:8080/api/v1/dashboard/vendas/por-dia-hora"
+```
+
+Resposta `200`:
+
+```json
+{
+  "filtros": { "dataInicio": "2026-10-12", "dataFim": "2026-11-10", "status": [], "tipoEntrega": null },
+  "geradoEm": "2026-11-10T16:22:19.3009985-03:00",
+  "dados": [
+    { "diaSemana": 1, "dia": "Seg", "hora": 0, "pedidos": 0, "faturamento": 0.0 },
+    ...
+    { "diaSemana": 6, "dia": "Sáb", "hora": 21, "pedidos": 18, "faturamento": 1743.88 },
+    ...
+    { "diaSemana": 7, "dia": "Dom", "hora": 23, "pedidos": 8, "faturamento": 1067.39 }
+  ]
+}
+```
+
+| Campo | Descrição |
+|-------|-----------|
+| `diaSemana` | 1 = segunda-feira ... 7 = domingo (ISO 8601). |
+| `dia` | Abreviação do dia em português. |
+| `hora` | 0 a 23, no fuso da aplicação. |
 
 Erros: `400`, `401`, `403`.
 

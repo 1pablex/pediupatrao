@@ -140,6 +140,25 @@ class DashboardRepositoryMongoTest {
     }
 
     @Test
+    void serieSomaDescontosPorDia() {
+        Map<String, Agregado> serie = repository.seriePorPeriodo(PERIODO, Agrupamento.DIA);
+
+        assertThat(serie.get("2026-11-02").descontos()).isEqualByComparingTo("5.00");
+        assertThat(serie.get("2026-11-03").descontos()).isEqualByComparingTo("0");
+    }
+
+    @Test
+    void mapaDeCalorAgrupaPorDiaDaSemanaEHoraSemCancelados() {
+        List<DashboardRepository.Celula> celulas = repository.porDiaEHora(PERIODO);
+
+        // segunda (1) às 20h e 21h; terça (2) às 20h; o cancelado de terça ao meio-dia não entra
+        assertThat(celulas).extracting(c -> c.diaSemana() * 100 + c.hora())
+                .containsExactlyInAnyOrder(120, 121, 220);
+        assertThat(celulas).filteredOn(c -> c.diaSemana() == 1 && c.hora() == 20).singleElement()
+                .satisfies(c -> assertThat(c.valores().faturamento()).isEqualByComparingTo("110.00"));
+    }
+
+    @Test
     void porHoraIgnoraCancelados() {
         Map<Integer, Agregado> horas = repository.porHora(PERIODO);
 

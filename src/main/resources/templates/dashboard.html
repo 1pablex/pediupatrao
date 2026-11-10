@@ -5,250 +5,206 @@
 </head>
 <body>
 <div th:fragment="content" class="dash" id="dashboard">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
 
-    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <!-- Cabeçalho -->
+    <header class="dash-topo">
         <div>
-            <h2 class="fw-bold mb-0"><i class="bi bi-graph-up me-2 text-primary"></i>Dashboard</h2>
-            <p class="text-muted small mb-0">Desempenho das vendas e situação dos pedidos. Dados carregados da API
-                <code>/api/v1/dashboard</code>.</p>
+            <span class="dash-sobretitulo">Pediu Patrão · Painel do gerente</span>
+            <h2 class="dash-titulo">Dashboard de vendas</h2>
         </div>
-        <div class="d-flex align-items-center gap-3 small">
-            <span class="text-muted" id="statusAtualizacao" aria-live="polite">Carregando...</span>
-            <div class="form-check form-switch mb-0">
-                <input class="form-check-input" type="checkbox" role="switch" id="autoAtualizar" checked>
-                <label class="form-check-label" for="autoAtualizar">Atualizar a cada 60 s</label>
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAtualizar">
-                <i class="bi bi-arrow-clockwise me-1"></i>Atualizar
+        <div class="dash-acoes">
+            <span class="dash-mudo" id="statusAtualizacao" aria-live="polite">Carregando...</span>
+            <button type="button" class="dash-botao dash-botao-auto" id="autoAtualizar" aria-pressed="true">
+                <span class="dash-led" aria-hidden="true"></span>Atualizar a cada 5 min
+            </button>
+            <button type="button" class="dash-botao" id="btnAtualizar">
+                <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>Atualizar agora
             </button>
         </div>
-    </div>
+    </header>
 
     <div class="alert alert-warning d-none" id="avisoSessao" role="alert">
         Sua sessão expirou. <a th:href="@{/login}" class="alert-link">Entre novamente</a> para continuar.
     </div>
 
     <!-- RF05: uma única linha de filtros, que vale para todos os painéis -->
-    <form class="card card-body shadow-sm py-2 mb-4" id="filtros" autocomplete="off">
-        <div class="row g-2 align-items-end">
-            <div class="col-6 col-md-2">
-                <label for="fPeriodo" class="form-label small mb-1">Período</label>
-                <select id="fPeriodo" class="form-select form-select-sm">
-                    <option value="0">Hoje</option>
-                    <option value="7">Últimos 7 dias</option>
-                    <option value="30" selected>Últimos 30 dias</option>
-                    <option value="90">Últimos 90 dias</option>
-                    <option value="mes">Este mês</option>
-                    <option value="custom">Personalizado</option>
-                </select>
-            </div>
-            <div class="col-6 col-md-2">
-                <label for="fInicio" class="form-label small mb-1">De</label>
-                <input type="date" id="fInicio" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-2">
-                <label for="fFim" class="form-label small mb-1">Até</label>
-                <input type="date" id="fFim" class="form-control form-control-sm">
-            </div>
-            <div class="col-6 col-md-2">
-                <span class="form-label small mb-1 d-block" id="lblStatus">Status</span>
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary w-100 text-start dropdown-toggle" type="button"
-                            id="btnStatus" data-bs-toggle="dropdown" data-bs-auto-close="outside"
-                            aria-expanded="false" aria-labelledby="lblStatus btnStatus">Todos</button>
-                    <div class="dropdown-menu p-2 small" id="fStatus" aria-labelledby="btnStatus"></div>
-                </div>
-            </div>
-            <div class="col-6 col-md-2">
-                <label for="fTipo" class="form-label small mb-1">Tipo</label>
-                <select id="fTipo" class="form-select form-select-sm">
-                    <option value="">Entrega e retirada</option>
-                </select>
-            </div>
-            <div class="col-6 col-md-2">
-                <label for="fCategoria" class="form-label small mb-1">Categoria (ranking)</label>
-                <select id="fCategoria" class="form-select form-select-sm">
-                    <option value="">Todas</option>
-                </select>
-            </div>
+    <form class="dash-card dash-filtros" id="filtros" autocomplete="off" aria-label="Filtros">
+        <span class="dash-rotulo">Período</span>
+        <div class="dash-chips" id="fPeriodo" role="group" aria-label="Período">
+            <button type="button" class="dash-chip" data-periodo="0">Hoje</button>
+            <button type="button" class="dash-chip" data-periodo="7">7 dias</button>
+            <button type="button" class="dash-chip" data-periodo="30">30 dias</button>
+            <button type="button" class="dash-chip" data-periodo="90">90 dias</button>
+            <button type="button" class="dash-chip" data-periodo="mes">Este mês</button>
         </div>
-        <div class="small text-danger mt-1 d-none" id="erroFiltros" role="alert"></div>
+        <label class="dash-data"><span class="visually-hidden">De</span><input type="date" id="fInicio" aria-label="Data inicial"></label>
+        <span class="dash-mudo">até</span>
+        <label class="dash-data"><span class="visually-hidden">Até</span><input type="date" id="fFim" aria-label="Data final"></label>
+        <span class="dash-separador" aria-hidden="true"></span>
+        <div class="dropdown">
+            <button class="dash-select dropdown-toggle" type="button" id="btnStatus" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside" aria-expanded="false">Status: todos</button>
+            <div class="dropdown-menu p-2 small" id="fStatus" aria-labelledby="btnStatus"></div>
+        </div>
+        <select id="fTipo" class="dash-select" aria-label="Tipo de pedido">
+            <option value="">Entrega e retirada</option>
+        </select>
+        <select id="fCategoria" class="dash-select" aria-label="Categoria do ranking">
+            <option value="">Todas as categorias</option>
+        </select>
+        <div class="dash-chips" id="chipsAtivos"></div>
+        <span class="dash-mudo dash-periodo-texto" id="periodoTexto"></span>
+        <div class="dash-erro-filtro d-none" id="erroFiltros" role="alert"></div>
     </form>
 
-    <!-- RF01: indicadores gerais -->
-    <section class="row g-3 mb-4" aria-label="Indicadores gerais" data-painel="resumo">
-        <div class="col-12 col-xl-4">
-            <div class="card shadow-sm h-100 tile tile-hero">
-                <div class="card-body">
-                    <div class="tile-label">Faturamento</div>
-                    <div class="tile-hero-value" data-campo="faturamento">-</div>
-                    <div class="tile-delta" data-delta="variacaoFaturamento" data-bom="alta"></div>
-                    <div class="tile-sub" data-campo="periodo"></div>
-                </div>
-            </div>
+    <!-- RF01: indicadores gerais (os três primeiros trocam a métrica do gráfico de evolução) -->
+    <section class="dash-kpis" aria-label="Indicadores gerais" data-painel="resumo">
+        <button type="button" class="dash-kpi" data-metrica="faturamento" aria-pressed="true">
+            <span class="dash-kpi-rotulo">Faturamento</span>
+            <span class="dash-kpi-valor" data-campo="faturamento">-</span>
+            <span class="dash-kpi-linha"><span class="dash-delta" data-delta="variacaoFaturamento" data-bom="alta"></span><svg class="dash-spark" data-spark="faturamento" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"></svg></span>
+            <span class="dash-kpi-sub" data-campo="itensVendidos"></span>
+        </button>
+        <button type="button" class="dash-kpi" data-metrica="pedidos" aria-pressed="false">
+            <span class="dash-kpi-rotulo">Pedidos válidos</span>
+            <span class="dash-kpi-valor" data-campo="pedidosValidos">-</span>
+            <span class="dash-kpi-linha"><span class="dash-delta" data-delta="variacaoPedidos" data-bom="alta"></span><svg class="dash-spark" data-spark="pedidos" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"></svg></span>
+            <span class="dash-kpi-sub">sem contar cancelados</span>
+        </button>
+        <button type="button" class="dash-kpi" data-metrica="ticketMedio" aria-pressed="false">
+            <span class="dash-kpi-rotulo">Ticket médio</span>
+            <span class="dash-kpi-valor" data-campo="ticketMedio">-</span>
+            <span class="dash-kpi-linha"><span class="dash-delta" data-delta="variacaoTicketMedio" data-bom="alta"></span><svg class="dash-spark" data-spark="ticketMedio" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"></svg></span>
+            <span class="dash-kpi-sub">por pedido válido</span>
+        </button>
+        <div class="dash-kpi dash-kpi-fixo">
+            <span class="dash-kpi-rotulo">Cancelamentos</span>
+            <span class="dash-kpi-valor" data-campo="taxaCancelamento">-</span>
+            <span class="dash-kpi-linha"><span class="dash-mudo" data-campo="pedidosCancelados"></span><svg class="dash-spark" data-spark="cancelados" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"></svg></span>
+            <span class="dash-kpi-sub">dos pedidos do período</span>
         </div>
-        <div class="col-6 col-md-3 col-xl-2">
-            <div class="card shadow-sm h-100 tile"><div class="card-body">
-                <div class="tile-label">Pedidos válidos</div>
-                <div class="tile-value" data-campo="pedidosValidos">-</div>
-                <div class="tile-delta" data-delta="variacaoPedidos" data-bom="alta"></div>
-            </div></div>
+        <div class="dash-kpi dash-kpi-fixo">
+            <span class="dash-kpi-rotulo">Descontos concedidos</span>
+            <span class="dash-kpi-valor" data-campo="totalDescontos">-</span>
+            <span class="dash-kpi-linha"><span class="dash-mudo" data-campo="periodo"></span><svg class="dash-spark" data-spark="descontos" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true"></svg></span>
+            <span class="dash-kpi-sub">só gerentes concedem</span>
         </div>
-        <div class="col-6 col-md-3 col-xl-2">
-            <div class="card shadow-sm h-100 tile"><div class="card-body">
-                <div class="tile-label">Ticket médio</div>
-                <div class="tile-value" data-campo="ticketMedio">-</div>
-                <div class="tile-delta" data-delta="variacaoTicketMedio" data-bom="alta"></div>
-            </div></div>
-        </div>
-        <div class="col-6 col-md-3 col-xl-2">
-            <div class="card shadow-sm h-100 tile"><div class="card-body">
-                <div class="tile-label">Cancelamentos</div>
-                <div class="tile-value" data-campo="taxaCancelamento">-</div>
-                <div class="tile-sub" data-campo="pedidosCancelados"></div>
-            </div></div>
-        </div>
-        <div class="col-6 col-md-3 col-xl-2">
-            <div class="card shadow-sm h-100 tile"><div class="card-body">
-                <div class="tile-label">Descontos concedidos</div>
-                <div class="tile-value" data-campo="totalDescontos">-</div>
-                <div class="tile-sub" data-campo="itensVendidos"></div>
-            </div></div>
-        </div>
-        <div class="col-12"><div class="painel-erro d-none"></div></div>
+        <div class="painel-erro d-none"></div>
     </section>
 
-    <!-- RF02: análise de vendas -->
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-xl-8">
-            <section class="card shadow-sm h-100" data-painel="serie" aria-labelledby="tSerie">
-                <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <h3 class="h6 fw-bold mb-0" id="tSerie">Evolução das vendas</h3>
-                    <div class="d-flex gap-2">
-                        <div class="btn-group btn-group-sm" role="group" aria-label="Métrica">
-                            <input type="radio" class="btn-check" name="metrica" id="mFat" value="faturamento" checked>
-                            <label class="btn btn-outline-secondary" for="mFat">Faturamento</label>
-                            <input type="radio" class="btn-check" name="metrica" id="mPed" value="pedidos">
-                            <label class="btn btn-outline-secondary" for="mPed">Pedidos</label>
-                            <input type="radio" class="btn-check" name="metrica" id="mTic" value="ticketMedio">
-                            <label class="btn btn-outline-secondary" for="mTic">Ticket médio</label>
-                        </div>
-                        <select id="fAgrupamento" class="form-select form-select-sm w-auto" aria-label="Agrupar por">
-                            <option value="DIA">Por dia</option>
-                            <option value="SEMANA">Por semana</option>
-                            <option value="MES">Por mês</option>
-                        </select>
-                    </div>
+    <!-- RF02: evolução e categorias -->
+    <div class="dash-linha">
+        <section class="dash-card dash-largo" data-painel="serie" aria-labelledby="tSerie">
+            <div class="dash-card-topo">
+                <div>
+                    <h3 class="dash-card-titulo" id="tSerie">Evolução: <span id="nomeMetrica">faturamento</span></h3>
+                    <span class="dash-mudo">Clique em um indicador acima para trocar a métrica. Passe o mouse para comparar dia a dia.</span>
                 </div>
-                <div class="card-body">
-                    <div class="grafico grafico-alto"><canvas id="gSerie" role="img" aria-label="Gráfico de evolução das vendas"></canvas></div>
-                    <div class="painel-vazio d-none">Nenhuma venda no período selecionado.</div>
-                    <div class="painel-erro d-none"></div>
-                    <details class="mt-2 small"><summary>Ver dados em tabela</summary><div class="tabela-dados"></div></details>
+                <div class="dash-card-controles">
+                    <span class="dash-legenda"><span class="dash-traco dash-traco-atual"></span>Período atual</span>
+                    <span class="dash-legenda"><span class="dash-traco dash-traco-anterior"></span>Período anterior</span>
+                    <select id="fAgrupamento" class="dash-select" aria-label="Agrupar por">
+                        <option value="DIA">Por dia</option>
+                        <option value="SEMANA">Por semana</option>
+                        <option value="MES">Por mês</option>
+                    </select>
                 </div>
-            </section>
-        </div>
-        <div class="col-12 col-xl-4">
-            <section class="card shadow-sm h-100" data-painel="categoria" aria-labelledby="tCategoria">
-                <div class="card-header bg-white"><h3 class="h6 fw-bold mb-0" id="tCategoria">Faturamento por categoria</h3></div>
-                <div class="card-body">
-                    <div class="grafico grafico-medio"><canvas id="gCategoria" role="img" aria-label="Gráfico de faturamento por categoria"></canvas></div>
-                    <div class="painel-vazio d-none">Nenhuma venda no período selecionado.</div>
-                    <div class="painel-erro d-none"></div>
-                    <details class="mt-2 small"><summary>Ver dados em tabela</summary><div class="tabela-dados"></div></details>
+            </div>
+            <div class="grafico grafico-alto">
+                <canvas id="gSerie" role="img" aria-label="Gráfico da evolução das vendas comparado ao período anterior"></canvas>
+                <div class="dash-tooltip d-none" id="tipSerie" aria-hidden="true"></div>
+            </div>
+            <div class="painel-vazio d-none">Nenhuma venda no período selecionado.</div>
+            <div class="painel-erro d-none"></div>
+            <details class="dash-detalhes"><summary>Ver dados em tabela</summary><div class="tabela-dados"></div></details>
+        </section>
+
+        <section class="dash-card dash-estreito" data-painel="categoria" aria-labelledby="tCategoria">
+            <div class="dash-card-topo">
+                <div>
+                    <h3 class="dash-card-titulo" id="tCategoria">Faturamento por categoria</h3>
+                    <span class="dash-mudo">Clique em uma categoria para filtrar o ranking.</span>
                 </div>
-            </section>
-        </div>
+            </div>
+            <div class="dash-categorias" data-corpo="categorias"></div>
+            <div class="painel-vazio d-none">Nenhuma venda no período selecionado.</div>
+            <div class="painel-erro d-none"></div>
+        </section>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-12 col-xl-7">
-            <section class="card shadow-sm h-100" data-painel="hora" aria-labelledby="tHora">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h3 class="h6 fw-bold mb-0" id="tHora">Pedidos por horário</h3>
-                    <span class="small text-muted" data-campo="pico"></span>
+    <!-- RF02: mapa de calor e RF03: operação -->
+    <div class="dash-linha">
+        <section class="dash-card dash-largo" data-painel="calor" aria-labelledby="tCalor">
+            <div class="dash-card-topo">
+                <div>
+                    <h3 class="dash-card-titulo" id="tCalor">Movimento por dia e horário</h3>
+                    <span class="dash-mudo" id="infoCalor" aria-live="polite">Passe o mouse em uma célula.</span>
                 </div>
-                <div class="card-body">
-                    <div class="grafico grafico-medio"><canvas id="gHora" role="img" aria-label="Gráfico de pedidos por hora do dia"></canvas></div>
-                    <div class="painel-vazio d-none">Nenhuma venda no período selecionado.</div>
-                    <div class="painel-erro d-none"></div>
-                    <details class="mt-2 small"><summary>Ver dados em tabela</summary><div class="tabela-dados"></div></details>
-                </div>
-            </section>
-        </div>
+                <span class="dash-legenda-rampa" aria-hidden="true">Menos<span class="dash-rampa" id="rampa"></span>Mais</span>
+            </div>
+            <div class="dash-calor-rolagem"><div class="dash-calor" data-corpo="calor"></div></div>
+            <div class="painel-vazio d-none">Nenhuma venda no período selecionado.</div>
+            <div class="painel-erro d-none"></div>
+            <details class="dash-detalhes"><summary>Ver dados em tabela</summary><div class="tabela-dados"></div></details>
+        </section>
 
-        <!-- RF03: situação dos pedidos -->
-        <div class="col-12 col-xl-5">
-            <section class="card shadow-sm h-100" data-painel="situacao" aria-labelledby="tSituacao">
-                <div class="card-header bg-white"><h3 class="h6 fw-bold mb-0" id="tSituacao">Situação dos pedidos</h3></div>
-                <div class="card-body">
-                    <div class="row g-2 text-center mb-3">
-                        <div class="col-4"><div class="mini-tile"><div class="tile-label">Em andamento</div><div class="mini-valor" data-campo="emAndamento">-</div></div></div>
-                        <div class="col-4"><div class="mini-tile"><div class="tile-label">Finalizados</div><div class="mini-valor" data-campo="finalizados">-</div></div></div>
-                        <div class="col-4"><div class="mini-tile"><div class="tile-label">Tempo até a saída</div><div class="mini-valor" data-campo="tempoMedio">-</div></div></div>
-                    </div>
-                    <div class="grafico grafico-baixo"><canvas id="gSituacao" role="img" aria-label="Gráfico de pedidos por status"></canvas></div>
-                    <div class="painel-vazio d-none">Nenhum pedido no período selecionado.</div>
-                    <div class="painel-erro d-none"></div>
-                    <details class="mt-2 small"><summary>Ver dados em tabela</summary><div class="tabela-dados"></div></details>
+        <section class="dash-card dash-estreito" data-painel="situacao" aria-labelledby="tSituacao">
+            <div class="dash-card-topo">
+                <div>
+                    <h3 class="dash-card-titulo" id="tSituacao">Agora na operação</h3>
+                    <span class="dash-mudo">Pedidos em andamento, etapa por etapa</span>
                 </div>
-            </section>
-        </div>
+            </div>
+            <div class="dash-fluxo" data-corpo="fluxo"></div>
+            <div class="dash-tempo"><span>Tempo médio até a saída</span><strong data-campo="tempoMedio">-</strong></div>
+            <div class="dash-status">
+                <span class="dash-rotulo" data-campo="totalStatus">Todos os pedidos do período</span>
+                <div class="dash-segmentos" data-corpo="segmentos" role="img" aria-label="Divisão dos pedidos por status"></div>
+                <div class="dash-status-lista" data-corpo="statusLista"></div>
+                <span class="dash-mudo">Clique em um status para filtrar a lista de pedidos.</span>
+            </div>
+            <div class="painel-vazio d-none">Nenhum pedido no período selecionado.</div>
+            <div class="painel-erro d-none"></div>
+        </section>
     </div>
 
-    <div class="row g-3 mb-4">
-        <!-- RF04: produtos mais vendidos -->
-        <div class="col-12 col-xl-5">
-            <section class="card shadow-sm h-100" data-painel="ranking" aria-labelledby="tRanking">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center gap-2">
-                    <h3 class="h6 fw-bold mb-0" id="tRanking">Produtos mais vendidos</h3>
-                    <div class="btn-group btn-group-sm" role="group" aria-label="Ordenar ranking por">
-                        <input type="radio" class="btn-check" name="ordenarPor" id="oQtd" value="QUANTIDADE" checked>
-                        <label class="btn btn-outline-secondary" for="oQtd">Quantidade</label>
-                        <input type="radio" class="btn-check" name="ordenarPor" id="oFat" value="FATURAMENTO">
-                        <label class="btn btn-outline-secondary" for="oFat">Faturamento</label>
-                    </div>
+    <!-- RF04: ranking e RF03: pedidos -->
+    <div class="dash-linha">
+        <section class="dash-card dash-meio" data-painel="ranking" aria-labelledby="tRanking">
+            <div class="dash-card-topo">
+                <h3 class="dash-card-titulo" id="tRanking">Mais vendidos<span id="rankTitulo"></span></h3>
+                <div class="dash-segmentado" role="group" aria-label="Ordenar ranking por">
+                    <button type="button" data-ordem="QUANTIDADE" aria-pressed="true">Quantidade</button>
+                    <button type="button" data-ordem="FATURAMENTO" aria-pressed="false">Faturamento</button>
                 </div>
-                <div class="card-body p-0">
-                    <table class="table table-sm align-middle mb-0 tabela-num">
-                        <thead class="table-light">
-                            <tr><th class="ps-3">#</th><th>Produto</th><th class="text-end">Qtd.</th><th class="text-end">Faturamento</th><th style="width: 28%">Participação</th></tr>
-                        </thead>
-                        <tbody data-corpo="ranking"></tbody>
-                    </table>
-                    <div class="painel-vazio d-none p-3">Nenhum produto vendido no período.</div>
-                    <div class="painel-erro d-none p-3"></div>
-                </div>
-            </section>
-        </div>
+            </div>
+            <div class="dash-ranking" data-corpo="ranking"></div>
+            <div class="painel-vazio d-none">Nenhum produto vendido no período.</div>
+            <div class="painel-erro d-none"></div>
+        </section>
 
-        <!-- RF03: pedidos do período (acompanhamento) -->
-        <div class="col-12 col-xl-7">
-            <section class="card shadow-sm h-100" data-painel="pedidos" aria-labelledby="tPedidos">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h3 class="h6 fw-bold mb-0" id="tPedidos">Pedidos do período</h3>
-                    <span class="small text-muted" data-campo="totalPedidos"></span>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle mb-0 tabela-num">
-                            <thead class="table-light">
-                                <tr><th class="ps-3">Entrada</th><th>Cliente</th><th>Tipo</th><th>Status</th><th class="text-end">Total</th><th></th></tr>
-                            </thead>
-                            <tbody data-corpo="pedidos"></tbody>
-                        </table>
-                    </div>
-                    <div class="painel-vazio d-none p-3">Nenhum pedido no período selecionado.</div>
-                    <div class="painel-erro d-none p-3"></div>
-                </div>
-                <div class="card-footer bg-white d-flex justify-content-between align-items-center small">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="pagAnterior"><i class="bi bi-chevron-left"></i> Anterior</button>
-                    <span class="text-muted" id="pagInfo"></span>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="pagProxima">Próxima <i class="bi bi-chevron-right"></i></button>
-                </div>
-            </section>
-        </div>
+        <section class="dash-card dash-pedidos" data-painel="pedidos" aria-labelledby="tPedidos">
+            <div class="dash-card-topo">
+                <h3 class="dash-card-titulo" id="tPedidos">Pedidos do período<span id="pedTitulo"></span></h3>
+                <span class="dash-mudo" data-campo="totalPedidos"></span>
+            </div>
+            <div class="table-responsive">
+                <table class="dash-tabela">
+                    <thead><tr><th>Entrada</th><th>Cliente</th><th>Tipo</th><th>Status</th><th class="text-end">Total</th><th></th></tr></thead>
+                    <tbody data-corpo="pedidos"></tbody>
+                </table>
+            </div>
+            <div class="painel-vazio d-none">Nenhum pedido com esses filtros.</div>
+            <div class="painel-erro d-none"></div>
+            <div class="dash-paginacao">
+                <button type="button" class="dash-botao" id="pagAnterior"><i class="bi bi-chevron-left" aria-hidden="true"></i>Anterior</button>
+                <span class="dash-mudo" id="pagInfo"></span>
+                <button type="button" class="dash-botao" id="pagProxima">Próxima<i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+            </div>
+        </section>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>

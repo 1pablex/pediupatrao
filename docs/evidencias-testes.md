@@ -1,7 +1,7 @@
 # Evidências de testes - Dashboard Administrativo
 
-Execução de `./mvnw test` em 10/11/2026: **111 testes, 0 falhas, 0 erros, 0 ignorados**.
-Destes, **49 são do dashboard** (descritos abaixo); os outros 62 são da etapa anterior (perfis, pedidos e
+Execução de `./mvnw test` em 10/11/2026: **116 testes, 0 falhas, 0 erros, 0 ignorados**.
+Destes, **54 são do dashboard** (descritos abaixo); os outros 62 são da etapa anterior (perfis, pedidos e
 auditoria) e continuam passando, o que mostra que a nova funcionalidade não quebrou o que já existia.
 
 Os relatórios completos ficam em `target/surefire-reports/` após a execução.
@@ -23,9 +23,9 @@ em máquinas sem banco. Na execução registrada ele **rodou** (11 testes, 0 ign
 | Classe | Testes | O que verifica |
 |--------|--------|----------------|
 | `FiltroDashboardTest` | 8 | Período padrão de 30 dias; data só inicial; limites do dia; período invertido e acima de 366 dias recusados; 366 dias aceito; período anterior de mesma duração; status repetidos ignorados. |
-| `DashboardServiceTest` | 14 | Faturamento, ticket médio, taxa de cancelamento e variação (inclusive sem base de comparação e período vazio); série diária com dias zerados; semana começando na segunda; série mensal; 24 horas; participação por categoria; todos os status na situação e soma dos em andamento; validação de paginação e do limite do ranking; posições e participação no ranking; opções de filtro. |
-| `DashboardRepositoryMongoTest` | 11 | Com pedidos gravados no MongoDB: totais só de vendas; tempo médio até a saída; série por dia e por semana no fuso da aplicação; horário ignorando cancelados; valor por status; ranking com **desconto rateado** e categoria buscada no cadastro para itens antigos; filtro por categoria; vendas por categoria; filtros de status e tipo (inclusive `status=CANCELADO` sem faturamento); paginação do mais recente; lista de categorias; pedido do modelo antigo ignorado sem erro. |
-| `SegurancaDashboardApiTest` | 10 | Anônimo recebe 401 com desafio Basic; chamada AJAX recebe 401 **sem** o desafio; ATENDENTE recebe 403; GERENTE e ADMIN recebem 200 com envelope `filtros`/`geradoEm`/`dados`; integração por HTTP Basic; POST e DELETE recusados (somente leitura); filtros repassados corretamente ao serviço; período invertido, status inexistente, data mal formatada e agrupamento inválido retornam 400 com o campo `erros`. |
+| `DashboardServiceTest` | 16 | Faturamento, ticket médio, taxa de cancelamento e variação (inclusive sem base de comparação e período vazio); série diária com dias zerados e descontos; ponto correspondente do período anterior; mapa de calor com as 168 células começando na segunda; semana começando na segunda; série mensal; 24 horas; participação por categoria; todos os status na situação e soma dos em andamento; validação de paginação e do limite do ranking; posições e participação no ranking; opções de filtro. |
+| `DashboardRepositoryMongoTest` | 13 | Com pedidos gravados no MongoDB: totais só de vendas; tempo médio até a saída; série por dia e por semana no fuso da aplicação; descontos por dia; mapa de calor por dia da semana e hora sem cancelados; horário ignorando cancelados; valor por status; ranking com **desconto rateado** e categoria buscada no cadastro para itens antigos; filtro por categoria; vendas por categoria; filtros de status e tipo (inclusive `status=CANCELADO` sem faturamento); paginação do mais recente; lista de categorias; pedido do modelo antigo ignorado sem erro. |
+| `SegurancaDashboardApiTest` | 11 | Anônimo recebe 401 com desafio Basic; chamada AJAX recebe 401 **sem** o desafio; ATENDENTE recebe 403; GERENTE e ADMIN recebem 200 com envelope `filtros`/`geradoEm`/`dados`; integração por HTTP Basic; POST e DELETE recusados (somente leitura); filtros repassados corretamente ao serviço; período invertido, status inexistente, data mal formatada e agrupamento inválido retornam 400 com o campo `erros`; mapa de calor só para ADMIN e GERENTE. |
 | `SegurancaDashboardWebTest` | 4 | Página `/dashboard` abre para GERENTE e ADMIN e carrega o script da API; ATENDENTE recebe 403; sem login redireciona para `/login`. |
 | `DemoDataInitializerTest` | 2 | Dados de demonstração coerentes (nenhum pedido no futuro, total = itens - desconto, desconto até 20%, categoria preenchida, saída depois da entrada, há cancelados e em andamento) e reprodutíveis com a mesma semente. |
 
@@ -45,8 +45,8 @@ Resultado esperado e obtido: faturamento **R$ 175,00**, descontos R$ 5,00, 6 ite
 
 ## 3. Testes da API rodando (ponta a ponta)
 
-24 chamadas HTTP reais contra a aplicação com cerca de 1.300 pedidos de demonstração: **24 de 24 com o status
-esperado**, tempo de resposta entre 75 e 260 ms. Tabela completa em [evidencias/chamadas-api.md](evidencias/chamadas-api.md).
+26 chamadas HTTP reais contra a aplicação com cerca de 1.300 pedidos de demonstração: **26 de 26 com o status
+esperado**, tempo de resposta das consultas entre 75 e 230 ms. Tabela completa em [evidencias/chamadas-api.md](evidencias/chamadas-api.md).
 
 Resumo dos cenários:
 
@@ -54,7 +54,8 @@ Resumo dos cenários:
 |---------|----------|--------|
 | Sem credenciais | 401 | 401 |
 | ATENDENTE | 403 | 403 |
-| ADMIN e GERENTE em todos os 8 endpoints | 200 | 200 |
+| ADMIN e GERENTE em todos os 9 endpoints | 200 | 200 |
+| ATENDENTE no mapa de calor | 403 | 403 |
 | Período invertido, maior que 366 dias, data mal formatada | 400 | 400 |
 | Status, agrupamento, página e limite inválidos | 400 | 400 |
 | POST e DELETE na API | 403 | 403 |
@@ -69,8 +70,9 @@ Verificados no Chrome com a aplicação rodando:
 
 | Evidência | O que mostra |
 |-----------|--------------|
-| ![Indicadores e gráficos](evidencias/01-dashboard-indicadores-e-graficos.jpg) | Indicadores com comparativo, evolução diária e faturamento por categoria carregados da API. |
-| ![Situação, ranking e pedidos](evidencias/02-dashboard-situacao-ranking-pedidos.jpg) | Horário de pico em destaque, situação dos pedidos (inclusive em andamento), ranking com participação e lista paginada. |
+| ![Indicadores e gráficos](evidencias/01-dashboard-indicadores-e-graficos.jpg) | Indicadores com comparativo e mini gráficos, evolução com a linha do período anterior e o quadro do mouse aberto, faturamento por categoria. |
+| ![Mapa de calor e operação](evidencias/02-dashboard-situacao-ranking-pedidos.jpg) | Mapa de calor dia x hora com o pico destacado e o detalhe da célula sob o mouse; pedidos em andamento por etapa e divisão por status. |
+| ![Filtros cruzados](evidencias/05-filtros-cruzados.jpg) | Categoria "Pizza" filtrando o ranking e status "Cancelado" filtrando a lista de pedidos. |
 | ![Validação de filtro](evidencias/03-validacao-de-filtro.png) | Período invertido barrado com mensagem; nenhum dado é carregado. |
 | ![ATENDENTE bloqueado](evidencias/04-atendente-bloqueado.jpg) | ATENDENTE recebe 403 ao abrir `/dashboard`. |
 
@@ -93,4 +95,4 @@ MONGODB_DATABASE=pediupatrao_demo DEMO_GERAR_DADOS=true ./mvnw spring-boot:run
 No Windows (PowerShell): `$env:MONGODB_DATABASE="pediupatrao_demo"; $env:DEMO_GERAR_DADOS="true"; .\mvnw.cmd spring-boot:run`.
 
 A especificação [openapi.yaml](openapi.yaml) foi conferida quanto à sintaxe YAML e às referências internas
-(8 endpoints, 24 referências, nenhuma quebrada); ela não passou por um validador OpenAPI completo.
+(9 endpoints, 25 referências, nenhuma quebrada); ela não passou por um validador OpenAPI completo.
