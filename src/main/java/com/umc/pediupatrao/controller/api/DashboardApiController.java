@@ -12,6 +12,7 @@ import com.umc.pediupatrao.dto.dashboard.ResumoVendas;
 import com.umc.pediupatrao.dto.dashboard.SerieVendas;
 import com.umc.pediupatrao.dto.dashboard.SituacaoPedidos;
 import com.umc.pediupatrao.dto.dashboard.VendaPorCategoria;
+import com.umc.pediupatrao.dto.dashboard.VendaPorDiaHora;
 import com.umc.pediupatrao.dto.dashboard.VendaPorHora;
 import com.umc.pediupatrao.entity.StatusPedido;
 import com.umc.pediupatrao.entity.TipoEntrega;
@@ -82,6 +83,16 @@ public class DashboardApiController {
             @RequestParam(required = false) TipoEntrega tipoEntrega) {
         FiltroDashboard filtro = filtro(dataInicio, dataFim, status, tipoEntrega);
         return responder(filtro, dashboardService.porHora(filtro));
+    }
+
+    @GetMapping("/vendas/por-dia-hora")
+    public RespostaDashboard<List<VendaPorDiaHora>> porDiaEHora(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+            @RequestParam(required = false) List<StatusPedido> status,
+            @RequestParam(required = false) TipoEntrega tipoEntrega) {
+        FiltroDashboard filtro = filtro(dataInicio, dataFim, status, tipoEntrega);
+        return responder(filtro, dashboardService.porDiaEHora(filtro));
     }
 
     @GetMapping("/pedidos/situacao")

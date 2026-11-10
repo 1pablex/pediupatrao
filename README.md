@@ -5,7 +5,7 @@ Sistema de pedidos de pizzaria desenvolvido em **Java 21, Spring Boot 3.4, Sprin
 | Etapa | Entrega |
 |-------|---------|
 | 1 | Perfis de acesso, fluxo controlado de pedidos, descontos e cancelamentos exclusivos do gerente e auditoria persistente |
-| 2 | **Dashboard administrativo** com API própria de indicadores, gráficos, ranking e filtros ([detalhes](#etapa-2---dashboard-administrativo)), versão `v2.0.0` |
+| 2 | **Dashboard administrativo** com API própria de indicadores, gráficos, ranking e filtros ([detalhes](#etapa-2---dashboard-administrativo)), versão `v2.1.0` |
 
 ---
 
@@ -89,12 +89,12 @@ com os dados agregados direto no MongoDB.
 | Requisito | Na tela | Na API |
 |-----------|---------|--------|
 | RF01 Indicadores gerais | Faturamento, pedidos, ticket médio, cancelamentos e descontos, com variação sobre o período anterior | `GET /resumo` |
-| RF02 Análise de vendas | Evolução por dia, semana ou mês, faturamento por categoria e pedidos por horário | `GET /vendas/serie`, `/vendas/por-categoria`, `/vendas/por-hora` |
+| RF02 Análise de vendas | Evolução por dia, semana ou mês comparada ao período anterior, faturamento por categoria e mapa de calor por dia e horário | `GET /vendas/serie`, `/vendas/por-categoria`, `/vendas/por-dia-hora` |
 | RF03 Situação dos pedidos | Pedidos por status, em andamento, tempo médio até a saída e lista paginada | `GET /pedidos/situacao`, `/pedidos` |
 | RF04 Produtos mais vendidos | Ranking por quantidade ou faturamento, com participação | `GET /produtos/ranking` |
 | RF05 Filtros | Período, status, tipo e categoria em uma linha, guardados na URL | Parâmetros comuns e `GET /filtros` |
 | RF06 Integração com a API | Todo dado da tela vem da API via `fetch` | Sessão das telas ou HTTP Basic |
-| RF07 Atualização e tratamento | Atualização a cada 60 s, estados de carregando, vazio e erro, aviso de sessão expirada | `geradoEm` em cada resposta, validação com 400 e conversão segura dos dados |
+| RF07 Atualização e tratamento | Atualização a cada 5 min, estados de carregando, vazio e erro, aviso de sessão expirada | `geradoEm` em cada resposta, validação com 400 e conversão segura dos dados |
 
 ### Demonstração rápida
 
@@ -120,8 +120,9 @@ curl -i -u gerente01:SENHA "http://localhost:8080/api/v1/dashboard/resumo?dataIn
 | `feature/dashboard-api` | Endpoints da API, agregações no MongoDB, validação dos filtros, segurança, dados de demonstração e testes |
 | `feature/dashboard-ui` | Tela do dashboard que consome a API |
 | `feature/documentacao` | Requisitos, documentação dos endpoints, OpenAPI, evidências e este README |
+| `feature/dashboard-visual` | Nova identidade visual, gráficos interativos, mapa de calor e filtros cruzados |
 | `develop` | Integração das features (merges `--no-ff`) |
-| `release/2.0.0` | Fechamento da versão, integrada em `main` com a tag `v2.0.0` e devolvida para `develop` |
+| `release/2.0.0`, `release/2.1.0` | Fechamento de cada versão, integrada em `main` com as tags `v2.0.0` e `v2.1.0` e devolvida para `develop` |
 
 ---
 
