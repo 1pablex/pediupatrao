@@ -123,14 +123,6 @@ curl -i -u gerente01:SENHA "http://localhost:8080/api/v1/dashboard/resumo?dataIn
 | `develop` | Integração das features (merges `--no-ff`) |
 | `release/2.0.0` | Fechamento da versão, integrada em `main` com a tag `v2.0.0` e devolvida para `develop` |
 
-### Roteiro do vídeo (até 3 minutos)
-
-1. **0:00 a 0:20** Problema: o gerente precisa acompanhar vendas e pedidos. Login como `gerente01` e abrir o Dashboard.
-2. **0:20 a 1:10** Tela: indicadores com comparativo, troca entre faturamento, pedidos e ticket médio, agrupamento por semana, horário de pico, situação dos pedidos e ranking por quantidade e por faturamento.
-3. **1:10 a 1:40** Filtros: 90 dias, só retirada, recarregar a página mostrando que a URL mantém a visão; período invertido barrado.
-4. **1:40 a 2:20** API: os `curl` acima (200, 403 para o atendente, 400 com mensagem) e a documentação em `docs/api-dashboard.md`.
-5. **2:20 a 3:00** Decisões de projeto (`docs/requisitos.md`, seção 7): agregação no banco, um endpoint por pergunta de negócio, versionamento `/api/v1`, envelope com `geradoEm`, rateio do desconto e gitflow.
-
 ---
 
 ## Requisitos implementados (etapa 1)
